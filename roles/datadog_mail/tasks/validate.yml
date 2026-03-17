@@ -1,0 +1,24 @@
+---
+- name: Assert dd_api_key is provided and non-empty
+  assert:
+    that:
+      - dd_api_key is defined
+      - dd_api_key | length > 0
+    fail_msg: >
+      dd_api_key is required. Set it via:
+        ansible-playbook ... -e "dd_api_key={{ '{{' }} vault_dd_api_key {{ '}}' }}"
+      or export DD_API_KEY before running.
+
+- name: Assert dd_site is a known Datadog endpoint
+  assert:
+    that:
+      - dd_site in dd_valid_sites
+    fail_msg: >
+      dd_site '{{ dd_site }}' is not a recognised Datadog site.
+      Valid values: {{ dd_valid_sites | join(', ') }}
+
+- name: Assert running as root or with become
+  assert:
+    that:
+      - ansible_user_id == "root" or ansible_become | default(false)
+    fail_msg: "This role requires root privileges. Use become: true in your play."

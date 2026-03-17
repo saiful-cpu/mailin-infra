@@ -1,0 +1,52 @@
+---
+- name: Create http_check.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/http_check.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Mailcow HTTP check config
+  template:
+    src: mailcow_http_check.yaml.j2
+    dest: "{{ dd_confd_dir }}/http_check.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent
+
+- name: Create tcp_check.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/tcp_check.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Mailcow TCP port check config
+  template:
+    src: mailcow_tcp_check.yaml.j2
+    dest: "{{ dd_confd_dir }}/tcp_check.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent
+
+# Fix from review: logs config must live in a .d/ subdirectory
+- name: Create mailcow_logs.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/mailcow_logs.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Mailcow Docker log collection config
+  template:
+    src: mailcow_logs.yaml.j2
+    dest: "{{ dd_confd_dir }}/mailcow_logs.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent

@@ -1,0 +1,17 @@
+---
+- name: Create docker.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/docker.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Docker integration config
+  template:
+    src: docker_conf.yaml.j2
+    dest: "{{ dd_confd_dir }}/docker.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent

@@ -1,0 +1,38 @@
+---
+# Datadog Agent — Mail VM Deployment
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.ini playbook.yml \
+#     -e "dd_api_key={{ vault_dd_api_key }}"
+#
+# With vault:
+#   ansible-playbook -i inventory/hosts.ini playbook.yml --ask-vault-pass
+#
+# Limit to specific group:
+#   ansible-playbook -i inventory/hosts.ini playbook.yml -l inbound_servers
+#
+# Tags available:
+#   detect      — run service detection only
+#   install     — install agent only
+#   configure   — apply all integration configs
+#   mailcow     — Mailcow-specific config only
+#   postfix     — Postfix-specific config only
+#   docker      — Docker integration config only
+#   disk        — disk monitoring config only
+#   validate    — start agent and verify
+
+- name: Install and configure Datadog agent on mail VMs
+  hosts: mail_servers
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - vars/vault.yml   # expects vault_dd_api_key
+
+  vars:
+    dd_api_key: "{{ vault_dd_api_key }}"
+    dd_site: "datadoghq.com"
+    dd_env: "prod"
+
+  roles:
+    - role: datadog_mail

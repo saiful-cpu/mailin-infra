@@ -1,0 +1,40 @@
+---
+# Datadog API key — REQUIRED, set via vault or environment
+# Never set a default here. Pass via:
+#   ansible-playbook ... -e "dd_api_key={{ vault_dd_api_key }}"
+dd_api_key: "{{ vault_dd_api_key | default(lookup('env', 'DD_API_KEY')) }}"
+dd_site: "datadoghq.com"
+dd_env: "prod"
+
+# Valid sites for validation
+dd_valid_sites:
+  - datadoghq.com
+  - datadoghq.eu
+  - us3.datadoghq.com
+  - us5.datadoghq.com
+  - ddog-gov.com
+
+# Mailcow search paths
+mailcow_search_paths:
+  - /opt/mailcow-dockerized
+  - /opt/mailcow
+  - /srv/mailcow-dockerized
+  - /root/mailcow-dockerized
+
+# Postfix log paths (Debian/Ubuntu vs RHEL)
+postfix_log_paths:
+  debian: /var/log/mail.log
+  rhel: /var/log/maillog
+
+# Disk check excluded filesystems
+disk_excluded_filesystems:
+  - tmpfs
+  - devtmpfs
+  - squashfs
+  - overlay
+  - nsfs
+  - shm
+
+# Datadog agent config dir
+dd_conf_dir: /etc/datadog-agent
+dd_confd_dir: /etc/datadog-agent/conf.d

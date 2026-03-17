@@ -1,0 +1,63 @@
+## TCP Port Checks — Mailcow Mail Ports
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_date_time.iso8601 }}
+## Note: Rspamd port 11334 is NOT checked here — it is not exposed on the host
+##       in a standard Mailcow deployment. Use HTTP check via nginx/Mailcow UI instead.
+
+init_config:
+
+instances:
+  - name: smtp_25
+    host: localhost
+    port: 25
+    timeout: 5
+    tags:
+      - service:mail
+      - protocol:smtp
+      - port:25
+      - mail_server:{{ ansible_hostname }}
+      - mail_type:{{ mail_type }}
+
+  - name: smtp_587
+    host: localhost
+    port: 587
+    timeout: 5
+    tags:
+      - service:mail
+      - protocol:smtp_submission
+      - port:587
+      - mail_server:{{ ansible_hostname }}
+      - mail_type:{{ mail_type }}
+
+  - name: smtps_465
+    host: localhost
+    port: 465
+    timeout: 5
+    tags:
+      - service:mail
+      - protocol:smtps
+      - port:465
+      - mail_server:{{ ansible_hostname }}
+      - mail_type:{{ mail_type }}
+
+  - name: imaps_993
+    host: localhost
+    port: 993
+    timeout: 5
+    tags:
+      - service:mail
+      - protocol:imaps
+      - port:993
+      - mail_server:{{ ansible_hostname }}
+      - mail_type:{{ mail_type }}
+
+  - name: pop3s_995
+    host: localhost
+    port: 995
+    timeout: 5
+    tags:
+      - service:mail
+      - protocol:pop3s
+      - port:995
+      - mail_server:{{ ansible_hostname }}
+      - mail_type:{{ mail_type }}

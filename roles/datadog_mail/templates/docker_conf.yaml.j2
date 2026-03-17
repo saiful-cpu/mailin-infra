@@ -1,0 +1,18 @@
+## Docker Integration
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_date_time.iso8601 }}
+
+init_config:
+
+instances:
+  - url: unix://var/run/docker.sock
+    collect_container_size: true
+    collect_image_size: true
+    collect_images_stats: true
+    collect_events: true
+    exclude:
+      - "name:dd-agent"
+      - "image:datadog/agent"
+    tags:
+      - mail_server:{{ ansible_hostname }}
+      - mail_type:{{ mail_type }}

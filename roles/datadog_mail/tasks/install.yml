@@ -1,0 +1,36 @@
+---
+- name: Check if Datadog agent is already installed
+  command: datadog-agent version
+  register: _dd_version
+  changed_when: false
+  failed_when: false
+
+- name: Build host tags string
+  set_fact:
+    _dd_host_tags: >-
+      env:{{ dd_env }},hostname:{{ ansible_hostname }},role:mailserver,mail_type:{{ mail_type }}
+      {%- if has_mailcow | bool %},mail_platform:mailcow{% endif %}
+      {%- if has_postfix | bool %},mail_mta:postfix{% endif %}
+
+- name: Download and run Datadog install script
+  shell: |
+    DD_API_KEY="{{ dd_api_key }}" \
+    DD_SITE="{{ dd_site }}" \
+    DD_ENV="{{ dd_env }}" \
+    DD_HOST_TAGS="{{ _dd_host_tags | trim }}" \
+    bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
+  args:
+    creates: /usr/bin/datadog-agent
+  environment:
+    DD_API_KEY: "{{ dd_api_key }}"
+  no_log: true   # suppress API key from logs
+
+- name: Confirm agent binary is present
+  command: datadog-agent version
+  register: _dd_version_post
+  changed_when: false
+  failed_when: _dd_version_post.rc != 0
+
+- name: Show installed agent version
+  debug:
+    msg: "Datadog agent: {{ _dd_version_post.stdout_lines[0] }}"

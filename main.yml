@@ -1,0 +1,39 @@
+---
+- name: Validate required variables
+  import_tasks: validate.yml
+  tags: [always]
+
+- name: Detect services
+  import_tasks: detect.yml
+  tags: [detect]
+
+- name: Install Datadog agent
+  import_tasks: install.yml
+  tags: [install]
+
+- name: Configure Datadog agent core
+  import_tasks: configure_core.yml
+  tags: [configure, core]
+
+- name: Configure Docker integration
+  import_tasks: configure_docker.yml
+  tags: [configure, docker]
+  when: has_docker | bool
+
+- name: Configure Mailcow integration
+  import_tasks: configure_mailcow.yml
+  tags: [configure, mailcow]
+  when: has_mailcow | bool
+
+- name: Configure Postfix integration
+  import_tasks: configure_postfix.yml
+  tags: [configure, postfix]
+  when: has_postfix | bool
+
+- name: Configure disk monitoring
+  import_tasks: configure_disk.yml
+  tags: [configure, disk]
+
+- name: Start and validate agent
+  import_tasks: validate_agent.yml
+  tags: [validate]

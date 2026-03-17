@@ -1,0 +1,33 @@
+---
+- name: Enable log collection in datadog.yaml
+  lineinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    regexp: '^#?\s*logs_enabled:'
+    line: 'logs_enabled: true'
+    backup: yes
+  notify: restart datadog-agent
+
+- name: Set env in datadog.yaml
+  lineinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    regexp: '^#?\s*env:'
+    line: "env: {{ dd_env }}"
+    backup: yes
+  notify: restart datadog-agent
+
+- name: Add dd-agent to systemd-journal group
+  user:
+    name: dd-agent
+    groups: systemd-journal
+    append: yes
+  when: "'systemd-journal' in ansible_facts.getent_group"
+  ignore_errors: true
+
+- name: Add dd-agent to docker group
+  user:
+    name: dd-agent
+    groups: docker
+    append: yes
+  when:
+    - has_docker | bool
+    - "'docker' in ansible_facts.getent_group"

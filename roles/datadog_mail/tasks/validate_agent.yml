@@ -1,0 +1,35 @@
+---
+- name: Ensure Datadog agent service is enabled and started
+  service:
+    name: datadog-agent
+    state: started
+    enabled: yes
+
+- name: Wait for Datadog agent to become active (poll loop)
+  command: systemctl is-active datadog-agent
+  register: _dd_active
+  until: _dd_active.stdout == 'active'
+  retries: 15
+  delay: 2
+  changed_when: false
+
+- name: Check agent status
+  command: datadog-agent status
+  register: _dd_status
+  changed_when: false
+  failed_when: false
+
+- name: Show agent status summary
+  debug:
+    msg: "{{ _dd_status.stdout_lines[:20] }}"
+
+- name: Verify configured integrations are loaded
+  command: "datadog-agent status"
+  register: _dd_status_full
+  changed_when: false
+  failed_when: false
+
+- name: Report missing integration configs
+  debug:
+    msg: "WARNING: No integration configs found in {{ dd_confd_dir }}"
+  when: _dd_status_full.rc != 0

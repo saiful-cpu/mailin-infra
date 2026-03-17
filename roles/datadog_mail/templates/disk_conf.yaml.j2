@@ -1,0 +1,19 @@
+## Disk Monitoring
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_date_time.iso8601 }}
+##
+## use_mount: false and all_partitions: false to avoid collecting Docker overlay
+## and container filesystems which generate excessive custom metric volume.
+
+init_config:
+
+instances:
+  - use_mount: false
+    all_partitions: false
+    excluded_filesystems:
+{% for fs in disk_excluded_filesystems %}
+      - {{ fs }}
+{% endfor %}
+    tags:
+      - mail_server:{{ ansible_hostname }}
+      - mail_type:{{ mail_type }}

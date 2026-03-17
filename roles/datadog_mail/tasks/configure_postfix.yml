@@ -1,0 +1,49 @@
+---
+- name: Create postfix.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/postfix.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Postfix integration config
+  template:
+    src: postfix_conf.yaml.j2
+    dest: "{{ dd_confd_dir }}/postfix.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent
+
+- name: Add dd-agent to postfix group
+  user:
+    name: dd-agent
+    groups: postfix
+    append: yes
+  ignore_errors: true
+
+# Create tcp_check.d only if Mailcow didn't already create it
+- name: Check if tcp_check.d conf already exists (from Mailcow)
+  stat:
+    path: "{{ dd_confd_dir }}/tcp_check.d/conf.yaml"
+  register: _tcp_check_exists
+
+- name: Create tcp_check.d conf directory (Postfix-only)
+  file:
+    path: "{{ dd_confd_dir }}/tcp_check.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+  when: not _tcp_check_exists.stat.exists
+
+- name: Deploy Postfix TCP check config (Postfix-only)
+  template:
+    src: postfix_tcp_check.yaml.j2
+    dest: "{{ dd_confd_dir }}/tcp_check.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  when: not _tcp_check_exists.stat.exists
+  notify: restart datadog-agent
