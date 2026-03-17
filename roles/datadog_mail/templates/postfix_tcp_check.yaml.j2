@@ -1,6 +1,6 @@
 ## TCP Port Checks — Postfix Standalone
 ## Managed by Ansible — do not edit manually
-## Generated: {{ ansible_date_time.iso8601 }}
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
 
 init_config:
 
@@ -13,7 +13,7 @@ instances:
       - service:mail
       - protocol:smtp
       - port:25
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - name: smtp_587
@@ -24,5 +24,5 @@ instances:
       - service:mail
       - protocol:smtp_submission
       - port:587
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}

@@ -15,13 +15,17 @@
     backup: yes
   notify: restart datadog-agent
 
+- name: Gather group database
+  getent:
+    database: group
+  ignore_errors: true
+
 - name: Add dd-agent to systemd-journal group
   user:
     name: dd-agent
     groups: systemd-journal
     append: yes
-  when: "'systemd-journal' in ansible_facts.getent_group"
-  ignore_errors: true
+  when: "'systemd-journal' in (ansible_facts.getent_group | default({}))"
 
 - name: Add dd-agent to docker group
   user:
@@ -30,4 +34,4 @@
     append: yes
   when:
     - has_docker | bool
-    - "'docker' in ansible_facts.getent_group"
+    - "'docker' in (ansible_facts.getent_group | default({}))"

@@ -1,6 +1,6 @@
 ## Mailcow Docker Container Log Collection
 ## Managed by Ansible — do not edit manually
-## Generated: {{ ansible_date_time.iso8601 }}
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
 ##
 ## Filters use Docker Compose service labels (com.docker.compose.service)
 ## rather than image names, which vary across Mailcow versions.
@@ -17,7 +17,7 @@ logs:
       com.docker.compose.service: postfix-mailcow
     tags:
       - mail_component:mta
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -27,7 +27,7 @@ logs:
       com.docker.compose.service: dovecot-mailcow
     tags:
       - mail_component:imap
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -37,7 +37,7 @@ logs:
       com.docker.compose.service: sogo-mailcow
     tags:
       - mail_component:webmail
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -47,7 +47,7 @@ logs:
       com.docker.compose.service: rspamd-mailcow
     tags:
       - mail_component:antispam
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -57,7 +57,7 @@ logs:
       com.docker.compose.service: clamd-mailcow
     tags:
       - mail_component:antivirus
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -67,7 +67,7 @@ logs:
       com.docker.compose.service: nginx-mailcow
     tags:
       - mail_component:proxy
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -77,7 +77,7 @@ logs:
       com.docker.compose.service: php-fpm-mailcow
     tags:
       - mail_component:phpfpm
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -87,7 +87,7 @@ logs:
       com.docker.compose.service: mysql-mailcow
     tags:
       - mail_component:database
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -97,7 +97,7 @@ logs:
       com.docker.compose.service: redis-mailcow
     tags:
       - mail_component:cache
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -107,7 +107,7 @@ logs:
       com.docker.compose.service: unbound-mailcow
     tags:
       - mail_component:dns
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -117,7 +117,7 @@ logs:
       com.docker.compose.service: acme-mailcow
     tags:
       - mail_component:acme
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -127,7 +127,7 @@ logs:
       com.docker.compose.service: watchdog-mailcow
     tags:
       - mail_component:watchdog
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -137,7 +137,7 @@ logs:
       com.docker.compose.service: olefy-mailcow
     tags:
       - mail_component:olefy
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: docker
@@ -147,5 +147,5 @@ logs:
       com.docker.compose.service: solr-mailcow
     tags:
       - mail_component:solr
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}

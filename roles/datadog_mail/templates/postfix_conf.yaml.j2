@@ -1,6 +1,6 @@
 ## Postfix Integration — Standalone MTA
 ## Managed by Ansible — do not edit manually
-## Generated: {{ ansible_date_time.iso8601 }}
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
 
 init_config:
   postfix_user: postfix
@@ -17,7 +17,7 @@ instances:
       - hold
     tags:
       - mail_mta:postfix
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
 logs:
@@ -27,7 +27,7 @@ logs:
     service: postfix
     tags:
       - mail_mta:postfix
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - type: file
@@ -36,6 +36,6 @@ logs:
     service: postfix
     tags:
       - mail_mta:postfix
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
       - log_level:error

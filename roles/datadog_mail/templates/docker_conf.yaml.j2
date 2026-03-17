@@ -1,6 +1,6 @@
 ## Docker Integration
 ## Managed by Ansible — do not edit manually
-## Generated: {{ ansible_date_time.iso8601 }}
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
 
 init_config:
 
@@ -14,5 +14,5 @@ instances:
       - "name:dd-agent"
       - "image:datadog/agent"
     tags:
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}

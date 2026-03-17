@@ -20,5 +20,5 @@
 - name: Assert running as root or with become
   assert:
     that:
-      - ansible_user_id == "root" or ansible_become | default(false)
+      - ansible_facts['user_id'] == "root" or ansible_become | default(false)
     fail_msg: "This role requires root privileges. Use become: true in your play."

@@ -107,7 +107,7 @@
     postfix_log_path: >-
       {{
         postfix_log_paths.rhel
-        if ansible_os_family == 'RedHat'
+        if ansible_facts['os_family'] == 'RedHat'
         else postfix_log_paths.debian
       }}
   when: has_postfix | bool
@@ -116,7 +116,7 @@
 - name: Determine mail_type from hostname
   set_fact:
     mail_type: >-
-      {%- set h = ansible_hostname | lower -%}
+      {%- set h = ansible_facts['hostname'] | lower -%}
       {%- if 'inbound' in h or h.startswith('in-') or h.endswith('-in') -%}
         inbound
       {%- elif 'outbound' in h or h.startswith('out-') or h.endswith('-out') -%}

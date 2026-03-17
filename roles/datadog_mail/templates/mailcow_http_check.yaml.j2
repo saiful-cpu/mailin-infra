@@ -1,6 +1,6 @@
 ## HTTP Checks — Mailcow Services
 ## Managed by Ansible — do not edit manually
-## Generated: {{ ansible_date_time.iso8601 }}
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
 
 init_config:
 
@@ -13,7 +13,7 @@ instances:
     tags:
       - service:mailcow
       - component:webui
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - name: mailcow_api
@@ -24,7 +24,7 @@ instances:
     tags:
       - service:mailcow
       - component:api
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}
 
   - name: mailcow_sogo
@@ -35,5 +35,5 @@ instances:
     tags:
       - service:mailcow
       - component:sogo
-      - mail_server:{{ ansible_hostname }}
+      - mail_server:{{ ansible_facts['hostname'] }}
       - mail_type:{{ mail_type }}

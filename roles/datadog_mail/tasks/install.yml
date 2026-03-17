@@ -8,7 +8,7 @@
 - name: Build host tags string
   set_fact:
     _dd_host_tags: >-
-      env:{{ dd_env }},hostname:{{ ansible_hostname }},role:mailserver,mail_type:{{ mail_type }}
+      env:{{ dd_env }},hostname:{{ ansible_facts['hostname'] }},role:mailserver,mail_type:{{ mail_type }}
       {%- if has_mailcow | bool %},mail_platform:mailcow{% endif %}
       {%- if has_postfix | bool %},mail_mta:postfix{% endif %}
 
