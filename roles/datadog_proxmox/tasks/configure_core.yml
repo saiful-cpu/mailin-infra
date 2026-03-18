@@ -1,0 +1,94 @@
+---
+# ── datadog.yaml core settings ────────────────────────────────────────────────
+- name: Enable log collection
+  lineinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    regexp: '^#?\s*logs_enabled:'
+    line: 'logs_enabled: true'
+    backup: yes
+  notify: restart datadog-agent
+  when: dd_logs_enabled | bool
+
+- name: Set env tag
+  lineinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    regexp: '^#?\s*env:'
+    line: "env: {{ dd_env }}"
+    backup: yes
+  notify: restart datadog-agent
+
+- name: Enable APM
+  lineinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    regexp: '^#?\s*apm_config:'
+    line: 'apm_config:'
+    backup: yes
+  notify: restart datadog-agent
+  when: dd_apm_enabled | bool
+
+- name: Enable APM - set enabled
+  lineinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    insertafter: '^apm_config:'
+    regexp: '^\s+enabled:'
+    line: '  enabled: true'
+    backup: yes
+  notify: restart datadog-agent
+  when: dd_apm_enabled | bool
+
+- name: Enable process collection
+  blockinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    marker: "# {mark} ANSIBLE MANAGED - process_config"
+    block: |
+      process_config:
+        process_collection:
+          enabled: true
+    backup: yes
+  notify: restart datadog-agent
+  when: dd_process_enabled | bool
+
+- name: Enable Network Performance Monitoring in datadog.yaml
+  blockinfile:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    marker: "# {mark} ANSIBLE MANAGED - network_config"
+    block: |
+      network_config:
+        enabled: true
+    backup: yes
+  notify: restart datadog-agent
+  when: dd_npm_enabled | bool
+
+# ── system-probe.yaml (required for NPM) ─────────────────────────────────────
+- name: Configure system-probe for NPM
+  blockinfile:
+    path: "{{ dd_conf_dir }}/system-probe.yaml"
+    create: yes
+    marker: "# {mark} ANSIBLE MANAGED - network_monitoring"
+    block: |
+      network_monitoring:
+        enabled: true
+    backup: yes
+  notify: restart datadog-agent-sysprobe
+  when: dd_npm_enabled | bool
+
+- name: Ensure system-probe service is enabled
+  service:
+    name: datadog-agent-sysprobe
+    state: started
+    enabled: yes
+  when: dd_npm_enabled | bool
+  failed_when: false
+
+# ── Group memberships ─────────────────────────────────────────────────────────
+- name: Gather group database
+  getent:
+    database: group
+  ignore_errors: true
+
+- name: Add dd-agent to systemd-journal group
+  user:
+    name: dd-agent
+    groups: systemd-journal
+    append: yes
+  when: "'systemd-journal' in (ansible_facts.getent_group | default({}))"

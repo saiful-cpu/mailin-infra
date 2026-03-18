@@ -1,0 +1,20 @@
+## Journald Log Collection — Proxmox Node
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+logs:
+  - type: journald
+    container_mode: false
+    include_units:
+      - pvedaemon.service
+      - pveproxy.service
+      - pvestatd.service
+      - pve-cluster.service
+      - pve-firewall.service
+      - corosync.service
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - pve_node:{{ ansible_facts['hostname'] }}
+      - pve_cluster:{{ pve_cluster }}

@@ -1,0 +1,17 @@
+---
+- name: Create disk.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/disk.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy disk monitoring config
+  template:
+    src: disk_conf.yaml.j2
+    dest: "{{ dd_confd_dir }}/disk.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent

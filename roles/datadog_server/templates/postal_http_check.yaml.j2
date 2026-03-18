@@ -1,0 +1,30 @@
+## HTTP Checks — Postal Mail Server
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - name: postal_webui
+    url: https://{{ ansible_facts['hostname'] }}/
+    method: GET
+    timeout: 10
+    tls_verify: false
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:postal
+      - component:webui
+
+  - name: postal_health
+    url: http://localhost:5000/health
+    method: GET
+    timeout: 5
+    tls_verify: false
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:postal
+      - component:api

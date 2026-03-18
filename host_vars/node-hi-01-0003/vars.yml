@@ -1,0 +1,4 @@
+---
+# Non-sensitive host vars for pve02
+proxmox_api_user: "mailininfra@pve"
+proxmox_api_token_name: "mailininfra"

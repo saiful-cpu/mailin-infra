@@ -1,0 +1,27 @@
+## Postal Log Collection
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+logs:
+  - type: journald
+    include_units:
+      - postal.service
+      - postal-smtp.service
+    source: postal
+    service: postal
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:postal
+
+  - type: file
+    path: "{{ postal_path | default('/opt/postal') }}/log/production.log"
+    source: postal
+    service: postal-app
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:postal
+      - component:app

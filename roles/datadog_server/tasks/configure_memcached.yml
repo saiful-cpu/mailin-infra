@@ -1,0 +1,17 @@
+---
+- name: Create mcache.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/mcache.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Memcached integration config
+  template:
+    src: memcached_conf.yaml.j2
+    dest: "{{ dd_confd_dir }}/mcache.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent

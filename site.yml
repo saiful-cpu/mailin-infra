@@ -1,0 +1,60 @@
+---
+# Datadog Agent — Unified Deployment
+#
+# Targets all server groups. Detection runs on each host and only deploys
+# integrations for services that are actually present.
+#
+# Usage:
+#   ansible-playbook site.yml --ask-vault-pass
+#
+# Single host:
+#   ansible-playbook site.yml -l pve01 --ask-vault-pass
+#
+# Dry run:
+#   ansible-playbook site.yml --ask-vault-pass --check
+#
+# Force agent upgrade:
+#   ansible-playbook site.yml --ask-vault-pass -e "dd_force_update=true"
+#
+# Tags:
+#   detect      — run detection only
+#   install     — install / upgrade agent only
+#   configure   — deploy all integration configs
+#   core        — APM, process, NPM, logs settings in datadog.yaml
+#   docker      — Docker integration
+#   mailcow     — Mailcow HTTP/TCP/log configs
+#   postal      — Postal HTTP/TCP/log configs
+#   postfix     — Postfix queue + log configs
+#   redis       — Redis integration
+#   memcached   — Memcached integration
+#   proxmox     — Proxmox API check + journald logs
+#   disk        — Disk monitoring
+#   validate    — Start agent and show status
+
+- name: Deploy Datadog agent on mail servers
+  hosts: mail_servers
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars/vault.yml
+    - vars/vault_proxmox.yml
+  vars:
+    dd_api_key: "{{ vault_dd_api_key }}"
+    dd_site: "datadoghq.com"
+    dd_env: "prod"
+  roles:
+    - role: datadog_server
+
+- name: Deploy Datadog agent on Proxmox nodes
+  hosts: proxmox_nodes
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars/vault.yml
+    - vars/vault_proxmox.yml
+  vars:
+    dd_api_key: "{{ vault_dd_api_key }}"
+    dd_site: "datadoghq.com"
+    dd_env: "prod"
+  roles:
+    - role: datadog_server

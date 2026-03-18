@@ -1,0 +1,72 @@
+---
+- name: Validate required variables
+  assert:
+    that:
+      - dd_api_key is defined
+      - dd_api_key | length > 0
+      - dd_site in dd_valid_sites
+    fail_msg: "dd_api_key is required and dd_site must be a valid Datadog endpoint."
+  tags: [always]
+
+- name: Detect services
+  import_tasks: detect.yml
+  tags: [detect, always]
+
+- name: Install Datadog agent
+  import_tasks: install.yml
+  tags: [install]
+
+- name: Configure core (APM / process / NPM / logs)
+  import_tasks: configure_core.yml
+  tags: [configure, core]
+
+- name: Configure Docker integration
+  import_tasks: configure_docker.yml
+  tags: [configure, docker]
+  when: has_docker | bool
+
+- name: Configure Mailcow integration
+  import_tasks: configure_mailcow.yml
+  tags: [configure, mailcow]
+  when: has_mailcow | bool
+
+- name: Configure Postal integration
+  import_tasks: configure_postal.yml
+  tags: [configure, postal]
+  when: has_postal | bool
+
+- name: Configure Postfix integration
+  import_tasks: configure_postfix.yml
+  tags: [configure, postfix]
+  when: has_postfix | bool
+
+- name: Configure Redis integration
+  import_tasks: configure_redis.yml
+  tags: [configure, redis]
+  when: has_redis | bool
+
+- name: Configure Memcached integration
+  import_tasks: configure_memcached.yml
+  tags: [configure, memcached]
+  when: has_memcached | bool
+
+- name: Configure Proxmox integration
+  import_tasks: configure_proxmox.yml
+  tags: [configure, proxmox]
+  when: has_proxmox | bool
+
+- name: Remove stale postal.d if postal not detected
+  file:
+    path: "{{ dd_confd_dir }}/postal.d"
+    state: absent
+  when: not (has_postal | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Configure disk monitoring
+  import_tasks: configure_disk.yml
+  tags: [configure, disk]
+
+- name: Start and validate agent
+  import_tasks: validate_agent.yml
+  tags: [validate]

@@ -1,0 +1,29 @@
+## Redis Integration
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - host: {{ redis_host }}
+    port: {{ redis_port }}
+{% if redis_password | length > 0 %}
+    password: {{ redis_password }}
+{% endif %}
+    collect_client_metrics: true
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:redis
+
+logs:
+  - type: file
+    path: /var/log/redis/redis-server.log
+    source: redis
+    service: redis
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:redis

@@ -1,0 +1,81 @@
+---
+# ── Version check ─────────────────────────────────────────────────────────────
+- name: Check if Datadog agent binary exists
+  stat:
+    path: /usr/bin/datadog-agent
+  register: _dd_binary
+
+- name: Get current agent version (if installed)
+  command: datadog-agent version
+  register: _dd_version_raw
+  changed_when: false
+  failed_when: false
+  when: _dd_binary.stat.exists
+
+- name: Parse installed version number
+  set_fact:
+    _dd_installed_version: >-
+      {{
+        _dd_version_raw.stdout
+        | regex_search('Agent (\d+\.\d+\.\d+)', '\1')
+        | first
+        | default('0.0.0')
+      }}
+  when: _dd_binary.stat.exists and _dd_version_raw.rc == 0
+
+- name: Set installed version to 0.0.0 (not installed)
+  set_fact:
+    _dd_installed_version: "0.0.0"
+  when: not _dd_binary.stat.exists
+
+- name: Determine if upgrade is needed
+  set_fact:
+    _dd_needs_upgrade: >-
+      {{
+        dd_agent_min_version | length > 0 and
+        _dd_installed_version is version(dd_agent_min_version, '<')
+      }}
+
+- name: Show version status
+  debug:
+    msg: >-
+      {%- if not _dd_binary.stat.exists -%}
+        Agent not installed — will install {{ dd_agent_min_version }}.
+      {%- elif _dd_needs_upgrade | bool -%}
+        Agent {{ _dd_installed_version }} is below minimum {{ dd_agent_min_version }} — upgrading.
+      {%- elif dd_force_update | bool -%}
+        Agent {{ _dd_installed_version }} — dd_force_update=true, reinstalling.
+      {%- else -%}
+        Agent {{ _dd_installed_version }} is current (minimum: {{ dd_agent_min_version }}). Skipping install.
+      {%- endif -%}
+
+# ── Install / upgrade ─────────────────────────────────────────────────────────
+- name: Build host tags string
+  set_fact:
+    _dd_host_tags: >-
+      env:{{ dd_env }},role:{{ server_role }},host:{{ ansible_facts['hostname'] }}
+      {%- if has_proxmox | bool %},pve_node:{{ ansible_facts['hostname'] }},pve_cluster:{{ pve_cluster }}{% endif %}
+      {%- if has_mailcow | bool %},mail_platform:mailcow{% endif %}
+      {%- if has_postal | bool %},mail_platform:postal{% endif %}
+      {%- if has_postfix | bool %},mail_mta:postfix{% endif %}
+      {%- if mail_type not in ['none', 'unknown'] %},mail_type:{{ mail_type }}{% endif %}
+
+- name: Download and run Datadog install script
+  shell: |
+    DD_API_KEY="{{ dd_api_key }}" \
+    DD_SITE="{{ dd_site }}" \
+    DD_ENV="{{ dd_env }}" \
+    DD_HOST_TAGS="{{ _dd_host_tags | trim }}" \
+    bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
+  no_log: true
+  when: not _dd_binary.stat.exists or _dd_needs_upgrade | bool or dd_force_update | bool
+
+- name: Confirm agent binary is present
+  command: datadog-agent version
+  register: _dd_version_post
+  changed_when: false
+  failed_when: _dd_version_post.rc != 0
+
+- name: Show installed agent version
+  debug:
+    msg: "Datadog agent: {{ _dd_version_post.stdout_lines[0] }}"

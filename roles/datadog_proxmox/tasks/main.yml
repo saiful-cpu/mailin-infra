@@ -1,0 +1,20 @@
+---
+- name: Detect Proxmox environment
+  import_tasks: detect.yml
+  tags: [detect, always]
+
+- name: Install Datadog agent
+  import_tasks: install.yml
+  tags: [install]
+
+- name: Configure Datadog agent core
+  import_tasks: configure_core.yml
+  tags: [configure, core]
+
+- name: Configure Proxmox integrations
+  import_tasks: configure_proxmox.yml
+  tags: [configure, proxmox]
+
+- name: Start and validate agent
+  import_tasks: validate_agent.yml
+  tags: [validate]

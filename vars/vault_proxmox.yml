@@ -1,0 +1,19 @@
+---
+# Encrypt this file with: ansible-vault encrypt vars/vault_proxmox.yml
+# Edit with:             ansible-vault edit vars/vault_proxmox.yml
+#
+# ── Proxmox API (clustered nodes — single shared token) ───────────────────────
+# Only needed if your Proxmox nodes are in a cluster and share one token.
+# For standalone (unclustered) nodes, leave these empty and set
+# vault_proxmox_api_token_secret in host_vars/<hostname>/vault.yml instead.
+#
+# For clustered nodes: set all three below (single shared token).
+# For standalone nodes: leave this file empty and set
+# vault_proxmox_api_token_secret in host_vars/<hostname>/vault.yml only.
+#
+# vault_proxmox_api_user: "datadog@pam"
+# vault_proxmox_api_token_name: "datadog"
+# vault_proxmox_api_token_secret: "shared-secret-here"
+#
+# ── Redis (if password-protected) ────────────────────────────────────────────
+vault_redis_password: ""

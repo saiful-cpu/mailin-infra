@@ -1,0 +1,21 @@
+## Proxmox VE Integration
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+##
+## Collects per-node and per-VM/LXC metrics (CPU, memory, disk I/O, network)
+## via the Proxmox REST API.
+
+init_config:
+
+instances:
+  - proxmox_server: "https://{{ proxmox_host }}:{{ proxmox_port }}/api2/json"
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_name }}={{ proxmox_api_token_secret }}"
+    tls_verify: {{ proxmox_ssl_verify | lower }}
+    collect_guest_metrics: true
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - pve_node:{{ ansible_facts['hostname'] }}
+      - pve_cluster:{{ pve_cluster }}

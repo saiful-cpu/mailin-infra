@@ -1,0 +1,42 @@
+## HTTP Checks — Mailcow Services
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - name: mailcow_webui
+    url: https://{{ mailcow_hostname }}/
+    method: GET
+    timeout: 10
+    tls_verify: false
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:mailcow
+      - component:webui
+
+  - name: mailcow_api
+    url: https://{{ mailcow_hostname }}/api/v1/get/status/containers
+    method: GET
+    timeout: 10
+    tls_verify: false
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:mailcow
+      - component:api
+
+  - name: mailcow_sogo
+    url: https://{{ mailcow_hostname }}/SOGo/
+    method: GET
+    timeout: 10
+    tls_verify: false
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:mailcow
+      - component:sogo

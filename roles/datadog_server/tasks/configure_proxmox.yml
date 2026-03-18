@@ -1,0 +1,35 @@
+---
+- name: Create proxmox.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/proxmox.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Proxmox API check config
+  template:
+    src: proxmox_conf.yaml.j2
+    dest: "{{ dd_confd_dir }}/proxmox.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent
+
+- name: Create journald.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/journald.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy journald log collection config
+  template:
+    src: journald_conf.yaml.j2
+    dest: "{{ dd_confd_dir }}/journald.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent
+  when: dd_logs_enabled | bool

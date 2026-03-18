@@ -1,0 +1,39 @@
+---
+# Datadog API key — required, set via vault
+dd_api_key: "{{ vault_dd_api_key | default(lookup('env', 'DD_API_KEY')) }}"
+dd_site: "datadoghq.com"
+dd_env: "prod"
+
+dd_valid_sites:
+  - datadoghq.com
+  - datadoghq.eu
+  - us3.datadoghq.com
+  - us5.datadoghq.com
+  - ddog-gov.com
+
+# Proxmox API connection
+proxmox_host: "localhost"
+proxmox_port: 8006
+proxmox_ssl_verify: false
+
+# Proxmox API credentials — set via vault
+proxmox_api_user: "{{ vault_proxmox_api_user }}"
+proxmox_api_token_name: "{{ vault_proxmox_api_token_name }}"
+proxmox_api_token_secret: "{{ vault_proxmox_api_token_secret }}"
+
+# Features to enable
+dd_apm_enabled: true
+dd_process_enabled: true
+dd_npm_enabled: true          # Network Performance Monitoring (requires system-probe)
+dd_logs_enabled: true
+
+# Agent paths
+dd_conf_dir: /etc/datadog-agent
+dd_confd_dir: /etc/datadog-agent/conf.d
+
+# Disk monitoring excluded filesystems
+disk_excluded_filesystems:
+  - tmpfs
+  - devtmpfs
+  - squashfs
+  - fuse.lxcfs

@@ -1,0 +1,286 @@
+---
+# ── Reset detection state (prevent stale facts across runs) ───────────────────
+- name: Reset detection state
+  set_fact:
+    mailcow_path: ""
+    postal_path: ""
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+- name: Check Docker binary
+  command: docker info
+  register: _docker_info
+  changed_when: false
+  failed_when: false
+
+- name: Set has_docker fact
+  set_fact:
+    has_docker: "{{ _docker_info.rc == 0 }}"
+
+- name: Get running container count
+  command: docker ps -q
+  register: _docker_ps
+  changed_when: false
+  failed_when: false
+  when: has_docker | bool
+
+- name: Set docker_container_count fact
+  set_fact:
+    docker_container_count: "{{ _docker_ps.stdout_lines | length }}"
+  when: has_docker | bool
+
+# ── Proxmox ───────────────────────────────────────────────────────────────────
+- name: Check Proxmox PVE config directory
+  stat:
+    path: /etc/pve
+  register: _pve_dir
+
+- name: Check pveversion binary
+  command: pveversion
+  register: _pveversion
+  changed_when: false
+  failed_when: false
+
+- name: Set has_proxmox fact
+  set_fact:
+    has_proxmox: "{{ _pve_dir.stat.exists and _pveversion.rc == 0 }}"
+
+- name: Get Proxmox version
+  set_fact:
+    pve_version: "{{ _pveversion.stdout_lines[0] | default('unknown') }}"
+  when: has_proxmox | bool
+
+- name: Read corosync cluster name
+  slurp:
+    src: /etc/pve/corosync.conf
+  register: _corosync_conf
+  failed_when: false
+  when: has_proxmox | bool
+
+- name: Set pve_cluster fact
+  set_fact:
+    pve_cluster: >-
+      {%- if _corosync_conf.content is defined -%}
+        {%- set conf = _corosync_conf.content | b64decode -%}
+        {%- set match = conf | regex_search('cluster_name:\\s*(\\S+)', '\\1') -%}
+        {{ match[0] if match else 'standalone' }}
+      {%- else -%}
+        standalone
+      {%- endif -%}
+  when: has_proxmox | bool
+
+- name: Set pve_cluster default (non-Proxmox)
+  set_fact:
+    pve_cluster: "none"
+  when: not has_proxmox | bool
+
+# ── Mailcow ───────────────────────────────────────────────────────────────────
+- name: Check Mailcow config files
+  stat:
+    path: "{{ item }}/mailcow.conf"
+  loop: "{{ mailcow_search_paths }}"
+  register: _mailcow_conf_stat
+
+- name: Check Mailcow compose files
+  stat:
+    path: "{{ item }}/docker-compose.yml"
+  loop: "{{ mailcow_search_paths }}"
+  register: _mailcow_compose_stat
+
+- name: Determine Mailcow install path
+  set_fact:
+    mailcow_path: "{{ item.item }}"
+  loop: "{{ _mailcow_conf_stat.results }}"
+  when:
+    - item.stat.exists
+    - _mailcow_compose_stat.results[_idx].stat.exists
+  loop_control:
+    index_var: _idx
+
+- name: Set has_mailcow fact
+  set_fact:
+    has_mailcow: "{{ mailcow_path is defined and mailcow_path | length > 0 }}"
+
+- name: Read MAILCOW_HOSTNAME
+  shell: "grep -E '^MAILCOW_HOSTNAME=' {{ mailcow_path }}/mailcow.conf | cut -d'=' -f2 | tr -d '\"'"
+  register: _mailcow_hostname_raw
+  changed_when: false
+  when: has_mailcow | bool
+
+- name: Set mailcow_hostname fact
+  set_fact:
+    mailcow_hostname: "{{ _mailcow_hostname_raw.stdout | trim | default('localhost') }}"
+  when: has_mailcow | bool
+
+# ── Postal ────────────────────────────────────────────────────────────────────
+- name: Check Postal config directories
+  stat:
+    path: "{{ item }}"
+  loop: "{{ postal_search_paths }}"
+  register: _postal_dir_stat
+
+- name: Check postal binary
+  command: which postal
+  register: _postal_bin
+  changed_when: false
+  failed_when: false
+
+- name: Check postal systemd service
+  command: systemctl is-active postal
+  register: _postal_svc
+  changed_when: false
+  failed_when: false
+
+- name: Determine Postal install path
+  set_fact:
+    postal_path: "{{ item.item }}"
+  loop: "{{ _postal_dir_stat.results }}"
+  when: item.stat.exists
+  loop_control:
+    index_var: _idx
+
+- name: Set has_postal fact
+  set_fact:
+    has_postal: >-
+      {{
+        not (has_proxmox | bool) and
+        (postal_path | length > 0) and
+        (_postal_bin.rc == 0 or _postal_svc.stdout == 'active')
+      }}
+
+# ── Postfix (standalone — not shadowed by Mailcow or Postal) ─────────────────
+- name: Check Postfix binary
+  command: which postfix
+  register: _postfix_bin
+  changed_when: false
+  failed_when: false
+
+- name: Check Postfix config directory
+  stat:
+    path: /etc/postfix
+  register: _postfix_conf_dir
+
+- name: Check Postfix systemd service
+  command: systemctl is-active postfix
+  register: _postfix_svc
+  changed_when: false
+  failed_when: false
+
+- name: Set has_postfix fact
+  set_fact:
+    has_postfix: >-
+      {{
+        _postfix_bin.rc == 0 and
+        _postfix_conf_dir.stat.exists and
+        _postfix_svc.stdout == 'active' and
+        not (has_proxmox | bool) and
+        not (has_mailcow | bool) and
+        not (has_postal | bool)
+      }}
+
+- name: Get Postfix queue directory
+  command: postconf -h queue_directory
+  register: _postfix_queue
+  changed_when: false
+  failed_when: false
+  when: has_postfix | bool
+
+- name: Set postfix_queue_dir fact
+  set_fact:
+    postfix_queue_dir: "{{ _postfix_queue.stdout | trim | default('/var/spool/postfix') }}"
+  when: has_postfix | bool
+
+- name: Set postfix_log_path fact
+  set_fact:
+    postfix_log_path: >-
+      {{
+        postfix_log_paths.rhel
+        if ansible_facts['os_family'] == 'RedHat'
+        else postfix_log_paths.debian
+      }}
+  when: has_postfix | bool
+
+# ── Redis ─────────────────────────────────────────────────────────────────────
+- name: Check redis-server binary
+  command: which redis-server
+  register: _redis_bin
+  changed_when: false
+  failed_when: false
+
+- name: Check Redis systemd service
+  command: systemctl is-active redis-server
+  register: _redis_svc
+  changed_when: false
+  failed_when: false
+
+- name: Check Redis service alias (redis)
+  command: systemctl is-active redis
+  register: _redis_svc_alt
+  changed_when: false
+  failed_when: false
+
+- name: Set has_redis fact
+  set_fact:
+    has_redis: >-
+      {{
+        _redis_bin.rc == 0 and
+        (_redis_svc.stdout == 'active' or _redis_svc_alt.stdout == 'active')
+      }}
+
+# ── Memcached ─────────────────────────────────────────────────────────────────
+- name: Check memcached binary
+  command: which memcached
+  register: _memcached_bin
+  changed_when: false
+  failed_when: false
+
+- name: Check memcached systemd service
+  command: systemctl is-active memcached
+  register: _memcached_svc
+  changed_when: false
+  failed_when: false
+
+- name: Set has_memcached fact
+  set_fact:
+    has_memcached: >-
+      {{
+        _memcached_bin.rc == 0 and
+        _memcached_svc.stdout == 'active'
+      }}
+
+# ── Primary server role (for tagging) ────────────────────────────────────────
+- name: Determine server_role tag
+  set_fact:
+    server_role: >-
+      {%- if has_proxmox | bool -%}proxmox
+      {%- elif has_mailcow | bool -%}mailcow
+      {%- elif has_postal | bool -%}postal
+      {%- elif has_postfix | bool -%}postfix
+      {%- else -%}generic
+      {%- endif -%}
+
+# ── Mail direction tag (inbound/outbound) — mail servers only ─────────────────
+- name: Determine mail_type tag
+  set_fact:
+    mail_type: >-
+      {%- set h = ansible_facts['hostname'] | lower -%}
+      {%- if has_proxmox | bool -%}none
+      {%- elif 'inbound' in h or h.startswith('in-') or h.endswith('-in') -%}inbound
+      {%- elif 'outbound' in h or h.startswith('out-') or h.endswith('-out') -%}outbound
+      {%- elif has_mailcow | bool -%}inbound
+      {%- elif has_postal | bool or has_postfix | bool -%}outbound
+      {%- else -%}unknown
+      {%- endif -%}
+
+# ── Detection summary ─────────────────────────────────────────────────────────
+- name: Show detection results
+  debug:
+    msg:
+      - "server_role   : {{ server_role }}"
+      - "mail_type     : {{ mail_type }}"
+      - "has_proxmox   : {{ has_proxmox }}{% if has_proxmox | bool %} ({{ pve_version }}, cluster={{ pve_cluster }}){% endif %}"
+      - "has_docker    : {{ has_docker }}"
+      - "has_mailcow   : {{ has_mailcow }}{% if has_mailcow | bool %} ({{ mailcow_path }}, hostname={{ mailcow_hostname }}){% endif %}"
+      - "has_postal    : {{ has_postal }}{% if has_postal | bool %} ({{ postal_path | default('via binary/service') }}){% endif %}"
+      - "has_postfix   : {{ has_postfix }}"
+      - "has_redis     : {{ has_redis }}"
+      - "has_memcached : {{ has_memcached }}"

@@ -1,0 +1,18 @@
+## TCP Port Checks — Postfix Standalone
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - name: smtp_25
+    host: localhost
+    port: 25
+    timeout: 5
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, service:mail, protocol:smtp]
+
+  - name: smtp_587
+    host: localhost
+    port: 587
+    timeout: 5
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, service:mail, protocol:smtp_submission]

@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: datadog_server
+  author: mailin
+  description: >
+    Unified Datadog agent role. Auto-detects Proxmox, Postal, Mailcow, Postfix,
+    Docker, Redis, and Memcached — then deploys only the relevant integrations.
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Debian
+      versions: [bullseye, bookworm]
+    - name: Ubuntu
+      versions: ["20.04", "22.04", "24.04"]
+    - name: EL
+      versions: ["8", "9"]
+dependencies: []

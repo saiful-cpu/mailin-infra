@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  role_name: datadog_proxmox
+  author: mailin
+  description: Install and configure Datadog agent on Proxmox VE nodes
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Debian
+      versions: [bullseye, bookworm]
+dependencies: []

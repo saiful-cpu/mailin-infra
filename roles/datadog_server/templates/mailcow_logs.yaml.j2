@@ -1,0 +1,95 @@
+## Mailcow Docker Container Log Collection
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+logs:
+  - type: docker
+    source: postfix
+    service: mailcow-postfix
+    label:
+      com.docker.compose.service: postfix-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:mta]
+
+  - type: docker
+    source: dovecot
+    service: mailcow-dovecot
+    label:
+      com.docker.compose.service: dovecot-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:imap]
+
+  - type: docker
+    source: sogo
+    service: mailcow-sogo
+    label:
+      com.docker.compose.service: sogo-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:webmail]
+
+  - type: docker
+    source: rspamd
+    service: mailcow-rspamd
+    label:
+      com.docker.compose.service: rspamd-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:antispam]
+
+  - type: docker
+    source: clamav
+    service: mailcow-clamd
+    label:
+      com.docker.compose.service: clamd-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:antivirus]
+
+  - type: docker
+    source: nginx
+    service: mailcow-nginx
+    label:
+      com.docker.compose.service: nginx-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:proxy]
+
+  - type: docker
+    source: php-fpm
+    service: mailcow-phpfpm
+    label:
+      com.docker.compose.service: php-fpm-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:phpfpm]
+
+  - type: docker
+    source: mysql
+    service: mailcow-mysql
+    label:
+      com.docker.compose.service: mysql-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:database]
+
+  - type: docker
+    source: redis
+    service: mailcow-redis
+    label:
+      com.docker.compose.service: redis-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:cache]
+
+  - type: docker
+    source: unbound
+    service: mailcow-unbound
+    label:
+      com.docker.compose.service: unbound-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:dns]
+
+  - type: docker
+    source: acme
+    service: mailcow-acme
+    label:
+      com.docker.compose.service: acme-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:acme]
+
+  - type: docker
+    source: watchdog
+    service: mailcow-watchdog
+    label:
+      com.docker.compose.service: watchdog-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:watchdog]
+
+  - type: docker
+    source: solr
+    service: mailcow-solr
+    label:
+      com.docker.compose.service: solr-mailcow
+    tags: [env:{{ dd_env }}, role:{{ server_role }}, host:{{ ansible_facts['hostname'] }}, mail_component:solr]

@@ -1,0 +1,17 @@
+---
+- name: Create redisdb.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/redisdb.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Redis integration config
+  template:
+    src: redis_conf.yaml.j2
+    dest: "{{ dd_confd_dir }}/redisdb.d/conf.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent

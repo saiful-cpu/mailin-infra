@@ -1,0 +1,21 @@
+## Disk Monitoring
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - use_mount: false
+    all_partitions: false
+    excluded_filesystems:
+{% for fs in disk_excluded_filesystems %}
+      - {{ fs }}
+{% endfor %}
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+{% if has_proxmox | bool %}
+      - pve_node:{{ ansible_facts['hostname'] }}
+      - pve_cluster:{{ pve_cluster }}
+{% endif %}

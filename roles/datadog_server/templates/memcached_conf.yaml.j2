@@ -1,0 +1,14 @@
+## Memcached Integration
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - url: {{ memcached_host }}
+    port: {{ memcached_port }}
+    tags:
+      - env:{{ dd_env }}
+      - role:{{ server_role }}
+      - host:{{ ansible_facts['hostname'] }}
+      - service:memcached
