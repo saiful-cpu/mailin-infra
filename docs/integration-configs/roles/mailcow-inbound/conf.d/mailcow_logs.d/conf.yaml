@@ -1,0 +1,84 @@
+## ============================================================
+## Mailcow Docker Log Collection — mailcow-inbound role
+## ⚠  Live reload: yes
+## ============================================================
+##
+## HOW DOCKER LABEL-BASED LOG COLLECTION WORKS
+## ────────────────────────────────────────────
+## The Datadog Agent reads the label com.datadoghq.ad.logs from each running
+## container. No conf.d file is needed per container — labels do the work.
+##
+## Add the following to your mailcow docker-compose.override.yml:
+##
+##   services:
+##     postfix-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"postfix","service":"mailcow-postfix"}]'
+##     dovecot-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"dovecot","service":"mailcow-dovecot"}]'
+##     rspamd-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"rspamd","service":"mailcow-rspamd"}]'
+##     nginx-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"nginx","service":"mailcow-nginx"}]'
+##     sogo-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"sogo","service":"mailcow-sogo"}]'
+##     php-fpm-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"php-fpm","service":"mailcow-phpfpm"}]'
+##     clamd-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"clamav","service":"mailcow-clamd"}]'
+##     oletools-mailcow:
+##       labels:
+##         com.datadoghq.ad.logs: '[{"source":"python","service":"mailcow-oletools"}]'
+##
+## After adding labels: docker compose up -d (no full restart needed)
+##
+## ────────────────────────────────────────────
+## ALTERNATIVE: File-based autodiscovery (no label changes required)
+## ────────────────────────────────────────────
+## The entries below use ad_identifiers to target containers by name.
+## The Agent applies this log config to any container whose name or image
+## matches the ad_identifiers list. Requires logs_enabled: true in datadog.yaml.
+##
+## Validate:
+##   datadog-agent check docker   (logs section in output)
+##   datadog-agent status | grep -A5 "Logs Agent"
+
+## Postfix
+ad_identifiers:
+  - postfix-mailcow
+
+logs:
+  - source: postfix
+    service: mailcow-postfix
+    tags:
+      - component:postfix
+      - stack:mailcow
+
+---
+## NOTE: Each ad_identifiers block must be its own conf.yaml file.
+## Copy this file as a template and create one file per container:
+##
+##   /etc/datadog-agent/conf.d/mailcow_dovecot.d/conf.yaml
+##   /etc/datadog-agent/conf.d/mailcow_rspamd.d/conf.yaml
+##   /etc/datadog-agent/conf.d/mailcow_nginx.d/conf.yaml
+##   /etc/datadog-agent/conf.d/mailcow_sogo.d/conf.yaml
+##   /etc/datadog-agent/conf.d/mailcow_phpfpm.d/conf.yaml
+##   /etc/datadog-agent/conf.d/mailcow_clamd.d/conf.yaml
+##
+## Per-container template:
+##
+##   ad_identifiers:
+##     - <container-name>           # e.g. dovecot-mailcow
+##
+##   logs:
+##     - source: <source>           # e.g. dovecot
+##       service: mailcow-<name>    # e.g. mailcow-dovecot
+##       tags:
+##         - component:<name>
+##         - stack:mailcow

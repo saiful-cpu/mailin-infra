@@ -1,0 +1,91 @@
+## ============================================================
+## TCP Check Integration — mailcow-inbound role
+## Verifies mail protocol ports are open and accepting connections.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check tcp_check
+
+init_config:
+
+instances:
+  ## ── SMTP (inbound MX port) ────────────────────────────────────────────────────
+  - name: smtp_25
+    host: localhost
+    port: 25
+    timeout: 5
+    tags:
+      - service:postfix
+      - protocol:smtp
+      - port:25
+
+  ## ── SMTP Submission ───────────────────────────────────────────────────────────
+  - name: smtp_submission_587
+    host: localhost
+    port: 587
+    timeout: 5
+    tags:
+      - service:postfix
+      - protocol:submission
+      - port:587
+
+  ## ── SMTPS (implicit TLS) ──────────────────────────────────────────────────────
+  - name: smtps_465
+    host: localhost
+    port: 465
+    timeout: 5
+    tags:
+      - service:postfix
+      - protocol:smtps
+      - port:465
+
+  ## ── IMAP ──────────────────────────────────────────────────────────────────────
+  - name: imap_143
+    host: localhost
+    port: 143
+    timeout: 5
+    tags:
+      - service:dovecot
+      - protocol:imap
+      - port:143
+
+  ## ── IMAPS (implicit TLS) ──────────────────────────────────────────────────────
+  - name: imaps_993
+    host: localhost
+    port: 993
+    timeout: 5
+    tags:
+      - service:dovecot
+      - protocol:imaps
+      - port:993
+
+  ## ── POP3 ──────────────────────────────────────────────────────────────────────
+  - name: pop3_110
+    host: localhost
+    port: 110
+    timeout: 5
+    tags:
+      - service:dovecot
+      - protocol:pop3
+      - port:110
+
+  ## ── POP3S (implicit TLS) ──────────────────────────────────────────────────────
+  - name: pop3s_995
+    host: localhost
+    port: 995
+    timeout: 5
+    tags:
+      - service:dovecot
+      - protocol:pop3s
+      - port:995
+
+  ## ── ManageSieve ───────────────────────────────────────────────────────────────
+  - name: sieve_4190
+    host: localhost
+    port: 4190
+    timeout: 5
+    tags:
+      - service:dovecot
+      - protocol:sieve
+      - port:4190

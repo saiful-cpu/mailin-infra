@@ -1,0 +1,65 @@
+## ============================================================
+## HTTP Check Integration — mailcow-inbound role
+## Verifies Mailcow web endpoints are reachable and TLS certs are valid.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check http_check
+
+init_config:
+
+instances:
+  ## ── Mailcow Web UI (HTTPS) ───────────────────────────────────────────────────
+  - name: mailcow_webui
+    url: https://localhost/
+    method: GET
+
+    ## @param tls_verify - boolean - optional - default: true
+    ## Set false only when connecting to localhost with a self-signed cert.
+    tls_verify: false
+
+    ## @param check_certificate_expiration - boolean - optional - default: true
+    check_certificate_expiration: true
+    days_warning: 28
+    days_critical: 7
+
+    ## @param timeout - integer - optional - default: 10
+    timeout: 10
+
+    ## @param include_content - boolean - optional - default: false
+    ## Return the first 200 chars of the response body in the event.
+    include_content: false
+
+    ## @param http_response_status_code - string - optional - default: (1|2|3)\d\d
+    ## Regex for acceptable HTTP response codes.
+    http_response_status_code: "(2|3)\\d\\d"
+
+    tags:
+      - service:mailcow
+      - check:webui
+      - protocol:https
+
+  ## ── SOGo Webmail ──────────────────────────────────────────────────────────────
+  - name: mailcow_sogo
+    url: https://localhost/SOGo/
+    tls_verify: false
+    check_certificate_expiration: true
+    days_warning: 28
+    days_critical: 7
+    timeout: 15
+    ## SOGo can be slow to start; 302 redirect is expected on first load.
+    http_response_status_code: "(2|3)\\d\\d"
+    tags:
+      - service:mailcow
+      - check:sogo
+
+  ## ── Rspamd Web UI (internal, port 11334) ──────────────────────────────────────
+  - name: mailcow_rspamd_ui
+    url: http://localhost:11334/
+    tls_verify: false
+    timeout: 5
+    http_response_status_code: "(2|3)\\d\\d"
+    tags:
+      - service:mailcow
+      - check:rspamd

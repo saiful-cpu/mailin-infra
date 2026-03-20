@@ -1,0 +1,56 @@
+## ============================================================
+## Postfix Integration — postfix-outbound role
+## Monitors Postfix mail queue depths via postqueue.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## SUDO REQUIREMENT
+## ────────────────
+## The Postfix check runs `postqueue -p` to count queue entries.
+## dd-agent must have passwordless sudo access to this command.
+##
+## Create /etc/sudoers.d/datadog-postfix:
+##   dd-agent ALL=(root) NOPASSWD: /usr/sbin/postqueue -p
+##   dd-agent ALL=(root) NOPASSWD: /usr/bin/find /var/spool/postfix -type f
+##
+## Verify:
+##   sudo -u dd-agent sudo /usr/sbin/postqueue -p
+##
+## Validate:
+##   datadog-agent check postfix
+
+init_config:
+
+instances:
+  - ## @param directory - string - required
+    ## Path to the Postfix spool directory.
+    directory: /var/spool/postfix
+
+    ## @param queues - list of strings - optional
+    ## Which queues to monitor. These map to subdirectories under `directory`.
+    queues:
+      - active      # Messages being delivered now
+      - deferred    # Messages waiting for retry — key metric for outbound servers
+      - hold        # Messages on administrative hold
+      - incoming    # Messages received but not yet queued
+      - maildrop    # Local pickup queue (sendmail compatibility)
+
+    ## @param tags - list of strings - optional
+    tags:
+      - service:postfix
+      - role:postfix-outbound
+
+## Log collection for Postfix (bare-metal — logs via syslog/journald)
+logs:
+  - type: journald
+    source: postfix
+    service: postfix
+    include_units:
+      - postfix.service
+      - postfix@.service
+    ## @param log_processing_rules - list - optional
+    ## Optional: filter noisy lines. Remove to collect all.
+    # log_processing_rules:
+    #   - type: exclude_at_match
+    #     name: exclude_status_ok
+    #     pattern: "status=sent"

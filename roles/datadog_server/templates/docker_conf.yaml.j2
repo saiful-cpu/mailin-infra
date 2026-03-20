@@ -5,11 +5,20 @@
 init_config:
 
 instances:
-  - url: unix://var/run/docker.sock
-    collect_container_size: true
-    collect_image_size: true
+  - collect_container_size: true
     collect_images_stats: true
+    collect_container_count: true
+    collect_volume_count: true
+    collect_exit_codes: true
     collect_events: true
+    filtered_event_types:
+      - top
+      - exec_create
+      - exec_start
+      - exec_die
+    container_labels_as_tags:
+      com.docker.compose.service: compose_service
+      com.docker.compose.project: compose_project
     exclude:
       - "name:dd-agent"
       - "image:datadog/agent"
@@ -17,3 +26,10 @@ instances:
       - env:{{ dd_env }}
       - role:{{ server_role }}
       - host:{{ ansible_facts['hostname'] }}
+
+logs:
+  - type: journald
+    source: docker
+    service: dockerd
+    include_units:
+      - docker.service

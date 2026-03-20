@@ -1,0 +1,76 @@
+## ============================================================
+## Docker Integration — mailcow-inbound role
+## Managed reference config — copy to /etc/datadog-agent/conf.d/
+## ⚠  Agent restart required after first install (group membership change)
+## ============================================================
+##
+## Prerequisites:
+##   usermod -aG docker dd-agent
+##   systemctl restart datadog-agent
+##
+## Validate:
+##   datadog-agent check docker
+
+init_config:
+
+instances:
+  - ## @param url - string - optional - default: unix://var/run/docker.sock
+    ## Docker daemon socket. Use tcp://host:2376 for TLS remote daemon.
+    # url: unix://var/run/docker.sock
+
+    ## @param collect_container_size - boolean - optional - default: false
+    ## Collect disk usage per container (du-equivalent). Adds ~1 s to each
+    ## collection cycle per container. Acceptable on mailcow hosts.
+    collect_container_size: true
+
+    ## @param collect_images_stats - boolean - optional - default: false
+    ## Report total/dangling image counts.
+    collect_images_stats: true
+
+    ## @param collect_exit_codes - boolean - optional - default: false
+    ## Emit system.docker.containers.exit_codes metric when a container exits.
+    ## Essential for alerting on unexpected mailcow container restarts.
+    collect_exit_codes: true
+
+    ## @param collect_events - boolean - optional - default: true
+    ## Forward Docker daemon events (start/stop/die/kill/oom) to Datadog Events.
+    collect_events: true
+
+    ## @param filtered_event_types - list of strings - optional
+    ## Suppress noisy low-signal event types.
+    filtered_event_types:
+      - top
+      - exec_create
+      - exec_start
+      - exec_die
+
+    ## @param container_labels_as_tags - mapping - optional
+    ## Map Docker container labels to Datadog tags. Mailcow labels of interest:
+    container_labels_as_tags:
+      com.docker.compose.service: compose_service
+      com.docker.compose.project: compose_project
+      mailcow.role: mailcow_role
+
+    ## @param container_env_as_tags - mapping - optional
+    ## Map container env vars to Datadog tags.
+    # container_env_as_tags:
+    #   MAILCOW_HOSTNAME: mailcow_hostname
+
+    ## @param collect_container_count - boolean - optional - default: false
+    collect_container_count: true
+
+    ## @param collect_volume_count - boolean - optional - default: false
+    collect_volume_count: true
+
+    tags:
+      - integration:docker
+      - role:mailcow-inbound
+
+## Log collection for the Docker daemon itself.
+## Per-container log collection is handled via mailcow_logs.d/conf.yaml.
+logs:
+  - type: journald
+    source: docker
+    service: dockerd
+    include_units:
+      - docker.service

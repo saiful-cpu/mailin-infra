@@ -3,18 +3,15 @@
 ## Generated: {{ ansible_facts['date_time'].iso8601 }}
 
 init_config:
-  postfix_user: postfix
-  postqueue_path: /usr/sbin/postqueue
 
 instances:
   - directory: {{ postfix_queue_dir }}
     queues:
-      - incoming
       - active
       - deferred
-      - bounce
-      - corrupt
       - hold
+      - incoming
+      - maildrop
     tags:
       - env:{{ dd_env }}
       - role:{{ server_role }}
@@ -22,12 +19,9 @@ instances:
       - service:postfix
 
 logs:
-  - type: file
-    path: {{ postfix_log_path }}
+  - type: journald
     source: postfix
     service: postfix
-    tags:
-      - env:{{ dd_env }}
-      - role:{{ server_role }}
-      - host:{{ ansible_facts['hostname'] }}
-      - service:postfix
+    include_units:
+      - postfix.service
+      - postfix@.service

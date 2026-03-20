@@ -1,0 +1,28 @@
+## ============================================================
+## Memcached Integration — mailcow-inbound role
+## Mailcow Memcached runs in Docker, bound to 127.0.0.1:11211.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check mcache
+
+init_config:
+
+instances:
+  - ## @param url - string - required
+    ## IP or hostname of the Memcached server.
+    url: 127.0.0.1
+
+    ## @param port - integer - optional - default: 11211
+    port: 11211
+
+    ## @param socket - string - optional
+    ## Use a Unix domain socket instead of TCP. Mutually exclusive with url/port.
+    # socket: /var/run/memcached/memcached.sock
+
+    ## @param tags - list of strings - optional
+    tags:
+      - service:memcached
+      - component:cache
+      - role:mailcow-inbound

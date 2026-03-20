@@ -58,3 +58,17 @@
     dd_env: "prod"
   roles:
     - role: datadog_server
+
+- name: Deploy Datadog agent on jumpserver
+  hosts: jumpserver
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars/vault.yml
+    - vars/vault_proxmox.yml
+  vars:
+    dd_api_key: "{{ vault_dd_api_key }}"
+    dd_site: "datadoghq.com"
+    dd_env: "prod"
+  roles:
+    - role: datadog_server    

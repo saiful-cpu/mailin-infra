@@ -1,0 +1,71 @@
+## ============================================================
+## Process Integration — proxmox-node role
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check process
+
+init_config:
+
+instances:
+  ## ── Proxmox proxy daemon (web UI + API) ───────────────────────────────────────
+  - name: pveproxy
+    search_string:
+      - pveproxy
+    thresholds:
+      critical:
+        - 1
+        - null
+    tags:
+      - service:proxmox
+      - component:pveproxy
+
+  ## ── Proxmox main daemon ───────────────────────────────────────────────────────
+  - name: pvedaemon
+    search_string:
+      - pvedaemon
+    thresholds:
+      critical:
+        - 1
+        - null
+    tags:
+      - service:proxmox
+      - component:pvedaemon
+
+  ## ── Proxmox statistics daemon ─────────────────────────────────────────────────
+  - name: pvestatd
+    search_string:
+      - pvestatd
+    thresholds:
+      warning:
+        - 1
+        - null
+    tags:
+      - service:proxmox
+      - component:pvestatd
+
+  ## ── KVM/QEMU hypervisor processes ─────────────────────────────────────────────
+  ## Each running VM spawns a qemu-system-x86_64 process.
+  - name: kvm_vms
+    search_string:
+      - qemu-system-x86_64
+      - kvm
+    thresholds:
+      warning:
+        - 0     # 0 VMs is not an error — just track the count
+        - null
+    collect_children: false
+    tags:
+      - service:kvm
+
+  ## ── Datadog Agent ─────────────────────────────────────────────────────────────
+  - name: datadog-agent
+    search_string:
+      - datadog-agent
+    thresholds:
+      critical:
+        - 1
+        - 3
+    tags:
+      - service:datadog-agent

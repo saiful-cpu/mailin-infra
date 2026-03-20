@@ -1,0 +1,59 @@
+## ============================================================
+## Docker Integration — postal-relay role
+## Same as mailcow-inbound but without Mailcow-specific container labels.
+## ⚠  Agent restart required after first install (docker group)
+## ============================================================
+##
+## Prerequisites:
+##   usermod -aG docker dd-agent && systemctl restart datadog-agent
+##
+## Validate:
+##   datadog-agent check docker
+
+init_config:
+
+instances:
+  - collect_container_size: true
+    collect_images_stats: true
+    collect_exit_codes: true
+    collect_events: true
+
+    filtered_event_types:
+      - top
+      - exec_create
+      - exec_start
+      - exec_die
+
+    container_labels_as_tags:
+      com.docker.compose.service: compose_service
+      com.docker.compose.project: compose_project
+
+    collect_container_count: true
+    collect_volume_count: true
+
+    tags:
+      - integration:docker
+      - role:postal-relay
+
+## Postal container log collection via Docker labels.
+## Add to docker-compose.override.yml for each Postal container:
+##
+##   postal-web:
+##     labels:
+##       com.datadoghq.ad.logs: '[{"source":"ruby","service":"postal-web"}]'
+##   postal-worker:
+##     labels:
+##       com.datadoghq.ad.logs: '[{"source":"ruby","service":"postal-worker"}]'
+##   postal-smtp:
+##     labels:
+##       com.datadoghq.ad.logs: '[{"source":"postfix","service":"postal-smtp"}]'
+##   postal-cron:
+##     labels:
+##       com.datadoghq.ad.logs: '[{"source":"ruby","service":"postal-cron"}]'
+
+logs:
+  - type: journald
+    source: docker
+    service: dockerd
+    include_units:
+      - docker.service

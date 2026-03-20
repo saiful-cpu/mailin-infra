@@ -1,0 +1,77 @@
+## ============================================================
+## Proxmox VE Integration — proxmox-node role
+## Collects per-node and per-VM/LXC metrics via the Proxmox REST API.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## SETUP: Create a Proxmox API token with read-only permissions
+## ─────────────────────────────────────────────────────────────
+## Run on the Proxmox node as root:
+##
+##   # 1. Create the user (PVE realm, no password needed for token auth)
+##   pveum user add datadog@pve
+##
+##   # 2. Create an API token — SECRET IS SHOWN ONCE, SAVE IT
+##   pveum user token add datadog@pve datadog --expire 0
+##   #   → outputs: datadog@pve!datadog = <UUID>
+##
+##   # 3. Grant PVEAuditor role at the root path
+##   #    --privsep 0 is the default but shown explicitly here.
+##   pveum aclmod / --token 'datadog@pve!datadog' --role PVEAuditor
+##
+##   # 4. Verify
+##   pveum acl list | grep datadog
+##   #   → /  |  PVEAuditor  |  token  |  datadog@pve!datadog  |  ...
+##
+## NOTE: Use --privsep 0 only if you want the token to inherit the user's
+## permissions rather than needing explicit ACLs. Using explicit ACLs
+## (the approach above) is more secure.
+##
+## IMPORTANT: The Proxmox check uses the `headers` field for authentication,
+## NOT `token_id`/`token_secret` fields. The Authorization header format is:
+##   PVEAPIToken=<user>@<realm>!<tokenid>=<secret>
+##
+## Validate:
+##   datadog-agent check proxmox
+
+init_config:
+
+instances:
+  - ## @param proxmox_server - string - required
+    ## Base URL of the Proxmox API. Must include /api2/json.
+    proxmox_server: "https://localhost:8006/api2/json"
+
+    ## @param headers - mapping - required
+    ## Authentication header. Replace placeholders with actual values.
+    ## Store the secret in Datadog Secrets Management or Ansible Vault.
+    headers:
+      Authorization: "PVEAPIToken=datadog@pve!datadog=<YOUR_TOKEN_SECRET>"
+
+    ## @param tls_verify - boolean - optional - default: true
+    ## Proxmox uses a self-signed certificate by default. Set false unless
+    ## you have installed a trusted TLS certificate.
+    tls_verify: false
+
+    ## @param collect_guest_metrics - boolean - optional - default: false
+    ## Collect per-VM and per-LXC metrics (CPU, memory, disk I/O, network).
+    ## Datadog will correlate these metrics with the guest host by hostname.
+    collect_guest_metrics: true
+
+    ## @param tags - list of strings - optional
+    tags:
+      - role:proxmox
+      - integration:proxmox
+      # Add node-specific tags here or use host_vars in Ansible:
+      # - pve_node:<nodename>
+      # - pve_cluster:<clustername>
+
+## Proxmox does not write to traditional log files — it uses journald.
+logs:
+  - type: journald
+    source: proxmox
+    service: pveproxy
+    include_units:
+      - pveproxy.service
+      - pvedaemon.service
+      - pvestatd.service
+      - pvescheduler.service

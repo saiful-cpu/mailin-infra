@@ -1,0 +1,56 @@
+## ============================================================
+## Redis Integration — mailcow-inbound role
+## Mailcow Redis runs in Docker, bound to 127.0.0.1:6379.
+## ⚠  Live reload: yes (no Agent restart needed)
+## ============================================================
+##
+## Validate:
+##   datadog-agent check redisdb
+
+init_config:
+
+instances:
+  - ## @param host - string - required
+    host: 127.0.0.1
+
+    ## @param port - integer - required
+    port: 6379
+
+    ## @param password - string - optional
+    ## Set if Redis has requirepass. Mailcow Redis is typically unauthenticated
+    ## (access controlled by network binding only).
+    # password: <REDIS_PASSWORD>
+
+    ## @param db - integer - optional - default: 0
+    ## Mailcow uses DB 0 for rate-limiting keys, DB 3 for SOGo session cache.
+    ## Monitor all by adding multiple instances or leaving at default.
+    db: 0
+
+    ## @param keys - list of strings - optional
+    ## Report the length of specific Redis keys as metrics.
+    ## Uncomment to monitor mailcow-specific keys:
+    # keys:
+    #   - RATELIMIT_REQ_*
+    #   - RATELIMIT_CONN_*
+
+    ## @param warn_on_missing_keys - boolean - optional - default: true
+    warn_on_missing_keys: true
+
+    ## @param slowlog - boolean - optional - default: false
+    ## Collect Redis SLOWLOG entries as Datadog events.
+    slowlog: false
+
+    ## @param command_stats - boolean - optional - default: false
+    ## Collect per-command statistics (INFO commandstats).
+    command_stats: false
+
+    ## @param collect_client_metrics - boolean - optional - default: false
+    collect_client_metrics: true
+
+    ## @param socket_timeout - integer - optional - default: 5
+    socket_timeout: 5
+
+    tags:
+      - service:redis
+      - component:cache
+      - role:mailcow-inbound

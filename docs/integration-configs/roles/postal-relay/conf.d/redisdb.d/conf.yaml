@@ -1,0 +1,41 @@
+## ============================================================
+## Redis Integration — postal-relay role
+## Postal uses Redis for job queuing (Resque/Sidekiq-style).
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check redisdb
+
+init_config:
+
+instances:
+  - host: 127.0.0.1
+    port: 6379
+
+    ## @param password - string - optional
+    ## Set if Postal's Redis has requirepass configured.
+    # password: <REDIS_PASSWORD>
+
+    ## @param db - integer - optional - default: 0
+    db: 0
+
+    ## @param keys - list of strings - optional
+    ## Postal Resque queue keys — monitor queue depths directly.
+    ## These follow the pattern: resque:queue:<queue_name>
+    keys:
+      - resque:queue:default
+      - resque:queue:delivery
+      - resque:queue:send_message
+
+    warn_on_missing_keys: false
+
+    ## @param command_stats - boolean - optional - default: false
+    command_stats: false
+
+    collect_client_metrics: true
+
+    tags:
+      - service:redis
+      - component:postal-queue
+      - role:postal-relay

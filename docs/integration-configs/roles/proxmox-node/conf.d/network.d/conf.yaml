@@ -1,0 +1,39 @@
+## ============================================================
+## Network Integration — all roles (shared base config)
+## Per-interface byte/packet/error/drop counters + TCP state counts.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check network
+
+init_config:
+
+instances:
+  - ## @param collect_connection_state - boolean - optional - default: false
+    ## Collect TCP connection-state counts (ESTABLISHED, TIME_WAIT, etc.)
+    ## Highly recommended for mail servers to detect connection floods.
+    collect_connection_state: true
+
+    ## @param collect_rate_metrics - boolean - optional - default: true
+    collect_rate_metrics: true
+
+    ## @param collect_count_metrics - boolean - optional - default: false
+    collect_count_metrics: false
+
+    ## @param excluded_interfaces - list of strings - optional
+    ## Skip loopback.
+    excluded_interfaces:
+      - lo
+      - lo0
+
+    ## @param excluded_interface_re - string - optional
+    ## Skip Docker bridge/veth interfaces — these are monitored at container level.
+    excluded_interface_re: "^(docker|veth|br-|virbr)[0-9a-f]+"
+
+    ## @param collect_aws_ena_metrics - boolean - optional - default: false
+    ## Enable on AWS EC2 instances with ENA network adapters.
+    # collect_aws_ena_metrics: true
+
+    tags:
+      - integration:network

@@ -1,0 +1,72 @@
+## ============================================================
+## Process Integration — postfix-outbound role
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check process
+
+init_config:
+
+instances:
+  ## ── Postfix master process ────────────────────────────────────────────────────
+  ## The master process spawns all other Postfix daemons. Its absence means
+  ## Postfix is completely down.
+  - name: postfix_master
+    search_string:
+      - /usr/lib/postfix/sbin/master
+      - postfix/master
+    thresholds:
+      critical:
+        - 1
+        - 1
+    tags:
+      - service:postfix
+      - process:master
+
+  ## ── Postfix smtp client (outbound delivery workers) ──────────────────────────
+  ## Watch for 0 smtp workers during peak — may indicate queue processing stall.
+  - name: postfix_smtp
+    search_string:
+      - postfix/smtp
+    thresholds:
+      warning:
+        - 0
+        - 100
+    tags:
+      - service:postfix
+      - process:smtp
+
+  ## ── Postfix qmgr (queue manager) ──────────────────────────────────────────────
+  - name: postfix_qmgr
+    search_string:
+      - postfix/qmgr
+    thresholds:
+      critical:
+        - 1
+        - 1
+    tags:
+      - service:postfix
+      - process:qmgr
+
+  ## ── Datadog Agent ─────────────────────────────────────────────────────────────
+  - name: datadog-agent
+    search_string:
+      - datadog-agent
+    thresholds:
+      critical:
+        - 1
+        - 3
+    tags:
+      - service:datadog-agent
+
+  ## ── SSH daemon ────────────────────────────────────────────────────────────────
+  - name: sshd
+    search_string:
+      - sshd
+    thresholds:
+      warning:
+        - 1
+        - null
+    tags:
+      - service:sshd

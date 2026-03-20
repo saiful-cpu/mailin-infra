@@ -11,17 +11,10 @@ instances:
     password: {{ redis_password }}
 {% endif %}
     collect_client_metrics: true
-    tags:
-      - env:{{ dd_env }}
-      - role:{{ server_role }}
-      - host:{{ ansible_facts['hostname'] }}
-      - service:redis
-
-logs:
-  - type: file
-    path: /var/log/redis/redis-server.log
-    source: redis
-    service: redis
+    command_stats: false
+    slowlog: false
+    socket_timeout: 5
+    warn_on_missing_keys: true
     tags:
       - env:{{ dd_env }}
       - role:{{ server_role }}

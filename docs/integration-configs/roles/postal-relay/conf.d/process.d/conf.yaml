@@ -1,0 +1,90 @@
+## ============================================================
+## Process Integration — postal-relay role
+## ⚠  Live reload: yes
+## ============================================================
+##
+## NOTE: There is no official Datadog "postal" check
+## (datadog_checks.postal does not exist in any agent version).
+## Postal queue depth is monitored indirectly via:
+##   1. Redis key lengths (resque:queue:*) — see redisdb.d/conf.yaml
+##   2. MySQL row counts on postal.messages — see mysql.d/conf.yaml
+##   3. Process monitors below (health of Postal worker daemons)
+##
+## Validate:
+##   datadog-agent check process
+
+init_config:
+
+instances:
+  ## ── Docker daemon ─────────────────────────────────────────────────────────────
+  - name: dockerd
+    search_string:
+      - dockerd
+    thresholds:
+      critical:
+        - 1
+        - 1
+    tags:
+      - service:docker
+
+  ## ── Postal web process ────────────────────────────────────────────────────────
+  - name: postal_web
+    search_string:
+      - postal web-server
+      - puma
+      - unicorn
+    thresholds:
+      critical:
+        - 1
+        - null
+    tags:
+      - service:postal
+      - component:web
+
+  ## ── Postal worker (job processor) ────────────────────────────────────────────
+  - name: postal_worker
+    search_string:
+      - postal worker
+      - resque
+    thresholds:
+      warning:
+        - 1
+        - null
+    tags:
+      - service:postal
+      - component:worker
+
+  ## ── Postal SMTP server ────────────────────────────────────────────────────────
+  - name: postal_smtp
+    search_string:
+      - postal smtp-server
+    thresholds:
+      critical:
+        - 1
+        - null
+    tags:
+      - service:postal
+      - component:smtp
+
+  ## ── Postfix master ───────────────────────────────────────────────────────────
+  - name: postfix_master
+    search_string:
+      - /usr/lib/postfix/sbin/master
+      - postfix/master
+    thresholds:
+      critical:
+        - 1
+        - 1
+    tags:
+      - service:postfix
+
+  ## ── Datadog Agent ─────────────────────────────────────────────────────────────
+  - name: datadog-agent
+    search_string:
+      - datadog-agent
+    thresholds:
+      critical:
+        - 1
+        - 3
+    tags:
+      - service:datadog-agent

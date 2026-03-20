@@ -1,0 +1,38 @@
+## ============================================================
+## Postfix Integration — postal-relay role
+## Postal uses Postfix as its SMTP engine for outbound delivery.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## SUDO REQUIREMENT (same as postfix-outbound role):
+##   cat > /etc/sudoers.d/datadog-postfix << 'EOF'
+##   dd-agent ALL=(root) NOPASSWD: /usr/sbin/postqueue -p
+##   dd-agent ALL=(root) NOPASSWD: /usr/bin/find /var/spool/postfix -type f
+##   EOF
+##   chmod 440 /etc/sudoers.d/datadog-postfix
+##
+## Validate:
+##   datadog-agent check postfix
+
+init_config:
+
+instances:
+  - directory: /var/spool/postfix
+    queues:
+      - active
+      - deferred
+      - hold
+      - incoming
+      - maildrop
+    tags:
+      - service:postfix
+      - component:postal-smtp
+      - role:postal-relay
+
+logs:
+  - type: journald
+    source: postfix
+    service: postal-postfix
+    include_units:
+      - postfix.service
+      - postfix@.service

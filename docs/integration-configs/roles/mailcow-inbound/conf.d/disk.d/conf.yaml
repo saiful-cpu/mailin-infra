@@ -1,0 +1,55 @@
+## ============================================================
+## Disk Integration — all roles (shared base config)
+## Auto-enabled by Agent; this file overrides defaults.
+## ⚠  Live reload: yes
+## ============================================================
+##
+## Validate:
+##   datadog-agent check disk
+
+init_config:
+
+instances:
+  - ## @param use_mount - boolean - optional - default: false
+    ## Tag metrics with mount-point paths instead of device names.
+    use_mount: true
+
+    ## @param excluded_filesystems - list of strings - optional
+    ## Skip these filesystem types (virtual/pseudo filesystems).
+    excluded_filesystems:
+      - tmpfs
+      - devtmpfs
+      - devfs
+      - overlay      # Docker layer filesystem — monitored via Docker check
+      - aufs
+      - squashfs
+      - nsfs
+      - sysfs
+      - proc
+      - cgroup
+      - cgroup2
+      - pstore
+      - hugetlbfs
+      - mqueue
+      - securityfs
+      - debugfs
+      - tracefs
+      - bpf
+
+    ## @param excluded_mountpoint_re - string - optional
+    ## Regex to exclude specific mount points.
+    excluded_mountpoint_re: "^/(dev|proc|sys|run/user|snap)($|/)"
+
+    ## @param all_partitions - boolean - optional - default: false
+    all_partitions: false
+
+    ## @param min_disk_size - float - optional - default: 0
+    ## Minimum disk size in GiB to report. Skips /boot on small partitions.
+    min_disk_size: 0.1
+
+    ## @param collect_inodes - boolean - optional - default: false (Linux default: true)
+    ## Collect inode usage metrics. Important for mail servers (many small files).
+    # collect_inodes: true
+
+    tags:
+      - integration:disk
