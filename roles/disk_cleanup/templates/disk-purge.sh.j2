@@ -1,0 +1,79 @@
+#!/bin/bash
+# disk-purge — keep {{ disk_min_free_pct }}% disk free on all mounted filesystems
+# Managed by Ansible (role: disk_cleanup). Do not edit manually.
+
+set -euo pipefail
+
+MIN_FREE_PCT={{ disk_min_free_pct }}
+LOG_PREFIX="[disk-purge $(date '+%Y-%m-%d %H:%M:%S')]"
+
+free_pct() {
+  df --output=pcent "$1" | tail -1 | tr -d ' %'
+  # returns USED %, so free = 100 - used
+}
+
+needs_cleanup() {
+  local mount="$1"
+  local used
+  used=$(free_pct "$mount")
+  local free=$(( 100 - used ))
+  [ "$free" -lt "$MIN_FREE_PCT" ]
+}
+
+log() {
+  echo "$LOG_PREFIX $*"
+}
+
+purge_docker_logs() {
+  log "Truncating oversized Docker container logs..."
+  find /var/lib/docker/containers -name '*-json.log' -size +50M \
+    -exec truncate -s 0 {} \; 2>/dev/null || true
+}
+
+purge_journal() {
+  log "Vacuuming systemd journal..."
+  journalctl --vacuum-size={{ journal_max_use }} 2>/dev/null || true
+}
+
+purge_docker_system() {
+  log "Pruning unused Docker images, networks, build cache..."
+  docker system prune -f --filter "until=168h" 2>/dev/null || true
+}
+
+purge_apt_cache() {
+  log "Cleaning apt cache..."
+  apt-get clean -y 2>/dev/null || true
+}
+
+purge_tmp() {
+  log "Removing files in /tmp older than 7 days..."
+  find /tmp -type f -atime +7 -delete 2>/dev/null || true
+}
+
+# Check root filesystem
+if needs_cleanup "/"; then
+  used=$(free_pct "/")
+  free=$(( 100 - used ))
+  log "WARNING: / is ${used}% used (${free}% free < ${MIN_FREE_PCT}% threshold). Running cleanup..."
+
+  purge_docker_logs
+  purge_journal
+  purge_docker_system
+  purge_apt_cache
+  purge_tmp
+
+  used_after=$(free_pct "/")
+  free_after=$(( 100 - used_after ))
+  log "After cleanup: / is ${used_after}% used (${free_after}% free)"
+
+  if needs_cleanup "/"; then
+    log "ERROR: Disk still below threshold after cleanup (${free_after}% free). Manual intervention required."
+    exit 1
+  else
+    log "OK: Disk is now within safe range."
+  fi
+else
+  used=$(free_pct "/")
+  free=$(( 100 - used ))
+  log "OK: / is ${used}% used (${free}% free). No action needed."
+fi

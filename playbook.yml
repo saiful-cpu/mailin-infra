@@ -22,7 +22,7 @@
 #   validate    — start agent and verify
 
 - name: Install and configure Datadog agent on mail VMs
-  hosts: mail_servers
+  hosts: mail_servers, inbound_servers_ovh
   become: true
   gather_facts: true
 
@@ -35,4 +35,5 @@
     dd_env: "prod"
 
   roles:
-    - role: datadog_mail
+    - role: datadog_server
+    - role: disk_cleanup

@@ -1,0 +1,18 @@
+---
+# Minimum free disk percentage to maintain (default: 5%)
+disk_min_free_pct: 5
+
+# Docker log rotation limits
+docker_log_max_size: "50m"
+docker_log_max_file: "3"
+
+# systemd journal retention
+journal_max_use: "500M"
+journal_max_file_sec: "1month"
+
+# Purge script location
+disk_purge_script: /usr/local/bin/disk-purge
+
+# Cron schedule for purge script (default: every hour)
+disk_purge_cron_minute: "0"
+disk_purge_cron_hour: "*"

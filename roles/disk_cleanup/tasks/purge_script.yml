@@ -1,0 +1,17 @@
+---
+- name: Deploy disk purge script
+  template:
+    src: disk-purge.sh.j2
+    dest: "{{ disk_purge_script }}"
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Schedule disk purge cron job
+  cron:
+    name: disk-purge
+    user: root
+    minute: "{{ disk_purge_cron_minute }}"
+    hour: "{{ disk_purge_cron_hour }}"
+    job: "{{ disk_purge_script }} >> /var/log/disk-purge.log 2>&1"
+    state: present

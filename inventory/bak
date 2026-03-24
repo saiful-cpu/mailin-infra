@@ -1,0 +1,146 @@
+[mail_servers]
+test-mailcow  ansible_host=66.206.9.5
+inbound-694-01a ansible_host=72.244.205.176
+; March 24 2024, 4.05
+inbound-850-01k ansible_host=40.160.11.52
+inbound-850-01za ansible_host=40.160.5.142
+inbound-850-01h ansible_host=147.135.76.157
+inbound-c00036-003a ansible_host=40.160.50.24
+; inbound-419-02b  ansible_host=10.0.1.11
+; globalrelay1     ansible_host=10.0.2.10
+; outbound-834-05a ansible_host=5.135.110.107 issue disk mount.
+; outbound-834-04a ansible_host=5.135.110.106 issue disk mount.
+; outbound-834-06a ansible_host=5.135.110.108 issue disk mount.
+; outbound-834-07a ansible_host=5.135.110.109 issue disk mount.
+; outbound-1003-01 ansible_host=5.135.110.110 issue disk mount.
+; outbound-1006-01 ansible_host=5.135.110.170 issue disk mount. 
+; outbound-928-01 ansible_host=5.135.110.171 issue disk mount.
+; outbound-928-01a ansible_host=5.135.110.172 issue disk mount.
+outbound-929-01 ansible_host=5.135.110.173
+oubound-419-01a ansible_host=5.135.110.174
+oubound-419-01b ansible_host=5.135.26.138
+outbound-925-01 ansible_host=5.135.26.139
+outbound-934-01 ansible_host=5.135.26.140
+outbound-933-01 ansible_host=5.135.26.141
+outbound-936-01 ansible_host=5.135.26.142
+
+[outbound_servers]
+; outbound-834-05a
+; outbound-834-04a
+; outbound-834-06a
+; outbound-834-07a
+; outbound-1003-01
+; outbound-1006-01
+; outbound-928-01
+; outbound-928-01a
+outbound-929-01
+oubound-419-01a
+oubound-419-01b
+outbound-925-01 
+outbound-934-01
+outbound-933-01
+outbound-936-01 
+
+[outbound_servers:vars]
+ansible_user=root
+ansible_ssh_private_key_file=~/.ssh/mo.pem
+
+
+[inbound_servers]
+inbound-694-01a
+inbound-419-02b
+inbound-850-01k 
+inbound-850-01za
+inbound-850-01h
+inbound-c00036-003a
+
+[inbound_servers_ovh]
+b3-8-us-east-va-1 ansible_host=40.160.14.220
+; c3-4-us-east-va-1 ansible_host=15.204.216.182
+c3-8-us-east-va-1 ansible_host=135.148.232.27
+inbound-1001-01 ansible_host=135.148.232.93
+inbound-1247-01 ansible_host=40.160.50.216
+inbound-197-01 ansible_host=40.160.5.33
+inbound-419-01a ansible_host=40.160.14.206
+inbound-419-01b ansible_host=15.204.207.187
+inbound-681-01 ansible_host=40.160.50.54
+inbound-682-02a ansible_host=40.160.15.219
+inbound-682-03a ansible_host=40.160.14.178
+inbound-712-01 ansible_host=40.160.15.55
+inbound-712-01a ansible_host=15.204.217.238
+inbound-712-01c ansible_host=40.160.5.85
+inbound-712-01b ansible_host=15.204.207.7
+inbound-712-01d ansible_host=40.160.4.139
+inbound-712-01e ansible_host=40.160.5.28
+inbound-712-01f ansible_host=15.204.207.254
+inbound-712-01g ansible_host=40.160.8.189
+inbound-717-01a ansible_host=40.160.10.105
+inbound-741-01 ansible_host=135.148.233.248
+inbound-741-01a ansible_host=40.160.10.62
+inbound-745-01a ansible_host=135.148.232.98
+inbound-751-01a ansible_host=40.160.10.222
+inbound-784-01a ansible_host=40.160.6.194
+inbound-808-01 ansible_host=40.160.50.181
+inbound-813-01 ansible_host=40.160.9.250
+inbound-824-01 ansible_host=40.160.7.64
+inbound-831-01 ansible_host=40.160.14.210
+inbound-839-01 ansible_host=40.160.14.180
+inbound-850-01e ansible_host=40.160.15.107
+inbound-850-01f ansible_host=40.160.7.232
+inbound-850-01g ansible_host=40.160.11.166
+inbound-850-01h ansible_host=147.135.76.157
+inbound-850-01i ansible_host=40.160.11.152
+inbound-850-01j ansible_host=40.160.10.242
+inbound-850-01g ansible_host=40.160.11.166
+inbound-850-01h ansible_host=147.135.76.157
+inbound-850-01i ansible_host=40.160.11.152
+inbound-850-01j ansible_host=40.160.10.242
+inbound-850-01k ansible_host=40.160.11.52
+inbound-850-01l ansible_host=40.160.8.206
+inbound-850-01m ansible_host=135.148.232.58
+inbound-850-01n ansible_host=147.135.79.24
+inbound-850-01o ansible_host=147.135.79.166
+inbound-850-01p ansible_host=40.160.15.226
+inbound-850-01q ansible_host=40.160.14.225
+inbound-850-01r ansible_host=147.135.77.124
+inbound-850-01s ansible_host=40.160.15.38
+inbound-850-01t ansible_host=40.160.4.88
+inbound-850-01za ansible_host=40.160.5.142
+
+
+[inbound_servers_ovh:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/mailin.pem
+; [outbound_servers]
+; globalrelay1
+
+; [mail_servers:vars]
+; ansible_user=root
+; ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[inbound_servers:vars]
+; ansible_user=root
+; ansible_ssh_private_key_file=~/.ssh/id_ed25519
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/mailin.pem
+[proxmox_nodes]
+node-ca-002-0001 ansible_host=54.38.113.24
+node-ca-01-0001 ansible_host=148.113.170.24
+node-hi-01-0003 ansible_host=66.206.9.2
+node-ca-01-0003 ansible_host=148.113.161.177
+node-hi-10-0001 ansible_host=23.227.207.166
+node-hi-20-0001 ansible_host=23.227.207.146
+node-hi-50-0001 ansible_host=107.155.100.82
+; pve01  ansible_host=10.0.0.10
+; pve02  ansible_host=10.0.0.11
+
+[proxmox_nodes:vars]
+ansible_user=root
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[jumpservers]
+jumpserver ansible_host=127.0.0.1
+
+[jumpservers:vars]
+ansible_user=infra-admin
+ansible_ssh_private_key_file=~/.ssh/id_ed25519

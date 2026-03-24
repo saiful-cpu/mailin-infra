@@ -1,0 +1,18 @@
+---
+- name: Configure systemd journal limits
+  ini_file:
+    path: /etc/systemd/journald.conf
+    section: Journal
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    backup: yes
+  loop:
+    - { key: SystemMaxUse,     value: "{{ journal_max_use }}" }
+    - { key: MaxFileSec,       value: "{{ journal_max_file_sec }}" }
+    - { key: SystemKeepFree,   value: "{{ (disk_min_free_pct | int * 1024) }}M" }
+  notify: reload journald
+
+- name: Vacuum journal to apply limits immediately
+  command: journalctl --vacuum-size={{ journal_max_use }}
+  changed_when: false
+  failed_when: false

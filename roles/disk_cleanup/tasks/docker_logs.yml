@@ -1,0 +1,25 @@
+---
+- name: Ensure /etc/docker directory exists
+  file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Configure Docker daemon log rotation
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  notify: restart docker
+
+- name: Truncate existing oversized container logs
+  shell: |
+    find /var/lib/docker/containers -name '*-json.log' -size +{{ docker_log_max_size }} \
+      -exec truncate -s 0 {} \;
+  changed_when: false
+  failed_when: false
