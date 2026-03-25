@@ -16,6 +16,10 @@
   import_tasks: install.yml
   tags: [install]
 
+- name: Backup existing datadog config
+  import_tasks: backup_config.yml
+  tags: [configure, backup]
+
 - name: Configure core (APM / process / NPM / logs)
   import_tasks: configure_core.yml
   tags: [configure, core]
@@ -55,11 +59,120 @@
   tags: [configure, proxmox]
   when: has_proxmox | bool
 
+- name: Configure process monitoring
+  import_tasks: configure_process.yml
+  tags: [configure, process]
+  when: has_mailcow | bool or has_postal | bool
+
+# ── Remove stale conf.d configs when services are no longer detected ──────────
+- name: Remove stale docker.d if docker not detected
+  file:
+    path: "{{ dd_confd_dir }}/docker.d"
+    state: absent
+  when: not (has_docker | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale redisdb.d if redis not detected
+  file:
+    path: "{{ dd_confd_dir }}/redisdb.d"
+    state: absent
+  when: not (has_redis | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale mcache.d if memcached not detected
+  file:
+    path: "{{ dd_confd_dir }}/mcache.d"
+    state: absent
+  when: not (has_memcached | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale process.d if no process-monitored service detected
+  file:
+    path: "{{ dd_confd_dir }}/process.d"
+    state: absent
+  when: not (has_mailcow | bool) and not (has_postal | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale postfix.d if postfix not detected
+  file:
+    path: "{{ dd_confd_dir }}/postfix.d"
+    state: absent
+  when: not (has_postfix | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale postfix sudoers if postfix not detected
+  file:
+    path: /etc/sudoers.d/datadog-postfix
+    state: absent
+  when: not (has_postfix | bool)
+  tags: [configure, cleanup]
+
 - name: Remove stale postal.d if postal not detected
   file:
     path: "{{ dd_confd_dir }}/postal.d"
     state: absent
   when: not (has_postal | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale postal_logs.d if postal not detected
+  file:
+    path: "{{ dd_confd_dir }}/postal_logs.d"
+    state: absent
+  when: not (has_postal | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale mailcow_logs.d if mailcow not detected
+  file:
+    path: "{{ dd_confd_dir }}/mailcow_logs.d"
+    state: absent
+  when: not (has_mailcow | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale mailcow http_check if mailcow not detected
+  file:
+    path: "{{ dd_confd_dir }}/http_check.d/conf.yaml"
+    state: absent
+  when: not (has_mailcow | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale postal http_check if postal not detected
+  file:
+    path: "{{ dd_confd_dir }}/http_check.d/postal.yaml"
+    state: absent
+  when: not (has_postal | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale tcp_check conf if no tcp-checked service detected
+  file:
+    path: "{{ dd_confd_dir }}/tcp_check.d/conf.yaml"
+    state: absent
+  when: not (has_mailcow | bool) and not (has_postal | bool) and not (has_postfix | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale proxmox.d if proxmox not detected
+  file:
+    path: "{{ dd_confd_dir }}/proxmox.d"
+    state: absent
+  when: not (has_proxmox | bool)
+  notify: restart datadog-agent
+  tags: [configure, cleanup]
+
+- name: Remove stale journald.d if proxmox not detected
+  file:
+    path: "{{ dd_confd_dir }}/journald.d"
+    state: absent
+  when: not (has_proxmox | bool)
   notify: restart datadog-agent
   tags: [configure, cleanup]
 

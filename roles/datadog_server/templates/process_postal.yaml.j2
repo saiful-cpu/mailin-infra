@@ -1,0 +1,26 @@
+## Process Monitoring — Postal
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - name: postal-ruby
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - ruby
+      - postal
+    exact_match: false
+
+  - name: postal-mariadb
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - mariadbd
+      - mysqld
+    exact_match: false
+
+  - name: postal-caddy
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - caddy
+    exact_match: false

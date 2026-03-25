@@ -1,4 +1,3 @@
----
 - name: Create redisdb.d conf directory
   file:
     path: "{{ dd_confd_dir }}/redisdb.d"
@@ -6,6 +5,12 @@
     owner: dd-agent
     group: dd-agent
     mode: '0750'
+
+- name: Remove Redis Autodiscovery config (conflicts with our static config)
+  file:
+    path: "{{ dd_confd_dir }}/redisdb.d/auto_conf.yaml"
+    state: absent
+  notify: restart datadog-agent
 
 - name: Deploy Redis integration config
   template:

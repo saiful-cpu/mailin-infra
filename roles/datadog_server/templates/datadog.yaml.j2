@@ -1,0 +1,44 @@
+## datadog.yaml
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+api_key: {{ dd_api_key }}
+site: {{ dd_site }}
+env: {{ dd_env }}
+log_level: {{ dd_log_level }}
+
+# ── Host tags ─────────────────────────────────────────────────────────────────
+tags:
+  - env:{{ dd_env }}
+  - host:{{ ansible_facts['hostname'] }}
+  - hostname:{{ ansible_facts['hostname'] }}
+  - role:{{ 'proxmox' if has_proxmox | bool else ('mailserver' if server_role in ['mailcow', 'postal', 'postfix'] else 'generic') }}
+  - mail_platform:{{ server_role }}
+{% if mail_type != 'none' %}
+  - mail_type:{{ mail_type }}
+{% endif %}
+{% if has_mailcow | bool and mailcow_hostname is defined and mailcow_hostname | length > 0 %}
+  - mailcow_domain:{{ mailcow_hostname }}
+{% endif %}
+{% for ip in ansible_facts['all_ipv4_addresses'] | default([]) | reject('match', '^(10\\.|172\\.|192\\.168\\.|127\\.|169\\.254\\.)') | list %}
+  - ip:{{ ip }}
+{% endfor %}
+
+# ── Log collection ────────────────────────────────────────────────────────────
+logs_enabled: {{ dd_logs_enabled | bool | lower }}
+
+logs_config:
+  auto_multi_line_detection: false
+{% if dd_logs_enabled | bool and has_docker | bool %}
+  container_collect_all: true
+{% endif %}
+
+# ── APM ───────────────────────────────────────────────────────────────────────
+apm_config:
+  enabled: {{ dd_apm_enabled | bool | lower }}
+
+# ── Process monitoring ────────────────────────────────────────────────────────
+process_config:
+  process_collection:
+    enabled: {{ dd_process_enabled | bool | lower }}

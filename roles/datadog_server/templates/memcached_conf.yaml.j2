@@ -5,7 +5,8 @@
 init_config:
 
 instances:
-  - url: {{ memcached_host }}
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    url: {{ memcached_host }}
     port: {{ memcached_port }}
     tags:
       - env:{{ dd_env }}

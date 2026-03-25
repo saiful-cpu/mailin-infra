@@ -5,7 +5,8 @@
 init_config:
 
 instances:
-  - collect_container_size: true
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    collect_container_size: true
     collect_images_stats: true
     collect_container_count: true
     collect_volume_count: true

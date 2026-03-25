@@ -111,6 +111,25 @@
     mailcow_hostname: "{{ _mailcow_hostname_raw.stdout | trim | default('localhost') }}"
   when: has_mailcow | bool
 
+- name: Get Mailcow Redis password
+  shell: grep "^REDISPASS=" {{ mailcow_path }}/mailcow.conf | cut -d'=' -f2
+  register: _mailcow_redis_pass
+  changed_when: false
+  when: has_mailcow | bool
+
+- name: Get Mailcow Redis port
+  shell: grep "^REDIS_PORT=" {{ mailcow_path }}/mailcow.conf | cut -d'=' -f2 | cut -d':' -f2
+  register: _mailcow_redis_port
+  changed_when: false
+  when: has_mailcow | bool
+
+- name: Check Mailcow Redis container is running
+  command: docker ps -q --filter name=redis-mailcow --filter status=running
+  register: _mailcow_redis_container
+  changed_when: false
+  failed_when: false
+  when: has_mailcow | bool
+
 # ── Postal ────────────────────────────────────────────────────────────────────
 - name: Check Postal config directories
   stat:
@@ -146,6 +165,24 @@
         (postal_path | length > 0) and
         (_postal_bin.rc == 0 or _postal_svc.stdout == 'active')
       }}
+
+- name: Read Postal Redis host from config
+  shell: >
+    grep -E '^\s*host\s*:' {{ postal_path | default('/opt/postal') }}/config/postal.yml
+    | head -1 | awk -F: '{print $2}' | tr -d ' "'
+  register: _postal_redis_host_raw
+  changed_when: false
+  failed_when: false
+  when: has_postal | bool
+
+- name: Read Postal Redis port from config
+  shell: >
+    grep -E '^\s*port\s*:' {{ postal_path | default('/opt/postal') }}/config/postal.yml
+    | head -1 | awk -F: '{print $2}' | tr -d ' "'
+  register: _postal_redis_port_raw
+  changed_when: false
+  failed_when: false
+  when: has_postal | bool
 
 # ── Postfix (standalone — not shadowed by Mailcow or Postal) ─────────────────
 - name: Check Postfix binary
@@ -222,9 +259,38 @@
   set_fact:
     has_redis: >-
       {{
-        _redis_bin.rc == 0 and
-        (_redis_svc.stdout == 'active' or _redis_svc_alt.stdout == 'active')
+        (_redis_bin.rc == 0 and (_redis_svc.stdout == 'active' or _redis_svc_alt.stdout == 'active'))
+        or (has_mailcow | bool and _mailcow_redis_container.stdout | default('') | length > 0)
+        or (has_postal | bool)
       }}
+
+- name: Set Redis connection facts (standalone)
+  set_fact:
+    redis_host: "127.0.0.1"
+    redis_port: "6379"
+    redis_password: "{{ vault_redis_password | default('') }}"
+  when:
+    - has_redis | bool
+    - _redis_bin.rc == 0
+    - _redis_svc.stdout == 'active' or _redis_svc_alt.stdout == 'active'
+
+- name: Set Redis connection facts (Mailcow)
+  set_fact:
+    redis_host: "127.0.0.1"
+    redis_port: "{{ _mailcow_redis_port.stdout | default('6379') | trim }}"
+    redis_password: "{{ _mailcow_redis_pass.stdout | default('') | trim }}"
+  when:
+    - has_mailcow | bool
+    - _mailcow_redis_container.stdout | default('') | length > 0
+
+- name: Set Redis connection facts (Postal)
+  set_fact:
+    redis_host: "{{ _postal_redis_host_raw.stdout | default('127.0.0.1') | trim }}"
+    redis_port: "{{ _postal_redis_port_raw.stdout | default('6379') | trim }}"
+    redis_password: ""
+  when:
+    - has_postal | bool
+    - not (has_mailcow | bool)
 
 # ── Memcached ─────────────────────────────────────────────────────────────────
 - name: Check memcached binary

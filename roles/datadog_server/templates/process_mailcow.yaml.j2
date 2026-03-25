@@ -1,0 +1,59 @@
+## Process Monitoring — Mailcow
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - name: postfix
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - smtpd
+      - qmgr
+
+  - name: clamd
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - "clamd.sh"
+
+  - name: dovecot
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - dovecot
+      - imap
+
+  - name: rspamd
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - rspamd
+
+  - name: mysql
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - mariadbd
+
+  - name: netfilter
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - nftables
+    exact_match: false
+
+  - name: nginx
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - nginx
+
+  - name: php-fpm
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - "php-fpm"
+
+  - name: redis
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - "redis-server"
+
+  - name: sogo
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - sogod

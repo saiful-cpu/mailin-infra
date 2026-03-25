@@ -28,6 +28,11 @@
     _dd_installed_version: "0.0.0"
   when: not _dd_binary.stat.exists
 
+- name: Set installed version to 0.0.0 (binary exists but version check failed)
+  set_fact:
+    _dd_installed_version: "0.0.0"
+  when: _dd_binary.stat.exists and _dd_version_raw.rc != 0
+
 - name: Determine if upgrade is needed
   set_fact:
     _dd_needs_upgrade: >-

@@ -22,10 +22,13 @@ dd_agent_min_version: "7.76.3"
 dd_force_update: false
 
 # ── Feature flags ─────────────────────────────────────────────────────────────
-dd_apm_enabled: true
-dd_process_enabled: true
-dd_npm_enabled: true          # Network Performance Monitoring (system-probe)
+dd_apm_enabled: false
+dd_process_enabled: false
+dd_npm_enabled: false         # Network Performance Monitoring (system-probe)
 dd_logs_enabled: true
+dd_log_level: warn            # Reduces agent log verbosity (default: info)
+
+dd_min_collection_interval: 30  # Seconds between metric polls (default: 15)
 
 # ── Proxmox API ───────────────────────────────────────────────────────────────
 proxmox_host: "localhost"

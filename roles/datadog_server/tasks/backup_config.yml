@@ -1,0 +1,29 @@
+---
+- name: Check if datadog config directory exists
+  stat:
+    path: "{{ dd_conf_dir }}"
+  register: _dd_conf_dir_stat
+
+- name: Create backup directory
+  file:
+    path: /var/backups/datadog
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  when: _dd_conf_dir_stat.stat.exists
+
+- name: Archive current datadog config
+  archive:
+    path: "{{ dd_conf_dir }}"
+    dest: "/var/backups/datadog/datadog-config-{{ ansible_facts['date_time']['epoch'] }}.tar.gz"
+    format: gz
+  when: _dd_conf_dir_stat.stat.exists
+
+- name: Remove old backups (keep last 5)
+  shell: >
+    ls -1t /var/backups/datadog/datadog-config-*.tar.gz 2>/dev/null
+    | tail -n +6
+    | xargs -r rm -f
+  changed_when: false
+  when: _dd_conf_dir_stat.stat.exists

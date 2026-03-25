@@ -33,19 +33,8 @@
     mode: '0640'
   notify: restart datadog-agent
 
-- name: Create mailcow_logs.d conf directory
+- name: Remove mailcow_logs.d (container logs collected via container_collect_all)
   file:
     path: "{{ dd_confd_dir }}/mailcow_logs.d"
-    state: directory
-    owner: dd-agent
-    group: dd-agent
-    mode: '0750'
-
-- name: Deploy Mailcow Docker log collection config
-  template:
-    src: mailcow_logs.yaml.j2
-    dest: "{{ dd_confd_dir }}/mailcow_logs.d/conf.yaml"
-    owner: dd-agent
-    group: dd-agent
-    mode: '0640'
+    state: absent
   notify: restart datadog-agent

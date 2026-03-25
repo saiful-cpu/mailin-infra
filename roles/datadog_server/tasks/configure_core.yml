@@ -1,58 +1,14 @@
 ---
-# ── datadog.yaml — simple top-level keys ─────────────────────────────────────
-- name: Set env tag
-  lineinfile:
-    path: "{{ dd_conf_dir }}/datadog.yaml"
-    regexp: '^#?\s*env:'
-    line: "env: {{ dd_env }}"
+# ── datadog.yaml (fully managed — template owns the entire file) ──────────────
+- name: Deploy datadog.yaml
+  template:
+    src: datadog.yaml.j2
+    dest: "{{ dd_conf_dir }}/datadog.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
     backup: yes
   notify: restart datadog-agent
-
-- name: Enable log collection
-  lineinfile:
-    path: "{{ dd_conf_dir }}/datadog.yaml"
-    regexp: '^#?\s*logs_enabled:'
-    line: 'logs_enabled: true'
-    backup: yes
-  notify: restart datadog-agent
-  when: dd_logs_enabled | bool
-
-# ── APM ───────────────────────────────────────────────────────────────────────
-- name: Enable APM
-  blockinfile:
-    path: "{{ dd_conf_dir }}/datadog.yaml"
-    marker: "# {mark} ANSIBLE MANAGED - apm_config"
-    block: |
-      apm_config:
-        enabled: true
-    backup: yes
-  notify: restart datadog-agent
-  when: dd_apm_enabled | bool
-
-# ── Process monitoring ────────────────────────────────────────────────────────
-- name: Enable process collection
-  blockinfile:
-    path: "{{ dd_conf_dir }}/datadog.yaml"
-    marker: "# {mark} ANSIBLE MANAGED - process_config"
-    block: |
-      process_config:
-        process_collection:
-          enabled: true
-    backup: yes
-  notify: restart datadog-agent
-  when: dd_process_enabled | bool
-
-# ── Network Performance Monitoring ───────────────────────────────────────────
-- name: Enable NPM in datadog.yaml
-  blockinfile:
-    path: "{{ dd_conf_dir }}/datadog.yaml"
-    marker: "# {mark} ANSIBLE MANAGED - network_config"
-    block: |
-      network_config:
-        enabled: true
-    backup: yes
-  notify: restart datadog-agent
-  when: dd_npm_enabled | bool
 
 - name: Configure system-probe for NPM
   blockinfile:
@@ -66,12 +22,29 @@
   notify: restart datadog-agent-sysprobe
   when: dd_npm_enabled | bool
 
-- name: Ensure system-probe service is enabled
+- name: Disable NPM in system-probe.yaml
+  blockinfile:
+    path: "{{ dd_conf_dir }}/system-probe.yaml"
+    create: yes
+    marker: "# {mark} ANSIBLE MANAGED - network_monitoring"
+    state: absent
+    backup: yes
+  when: not (dd_npm_enabled | bool)
+
+- name: Ensure system-probe service is started and enabled
   service:
     name: datadog-agent-sysprobe
     state: started
     enabled: yes
   when: dd_npm_enabled | bool
+  failed_when: false
+
+- name: Stop and disable system-probe service
+  service:
+    name: datadog-agent-sysprobe
+    state: stopped
+    enabled: no
+  when: not (dd_npm_enabled | bool)
   failed_when: false
 
 # ── Group memberships ─────────────────────────────────────────────────────────

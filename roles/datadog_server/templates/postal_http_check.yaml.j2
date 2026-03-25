@@ -5,7 +5,8 @@
 init_config:
 
 instances:
-  - name: postal_webui
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    name: postal_webui
     url: https://{{ ansible_facts['hostname'] }}/
     method: GET
     timeout: 10
@@ -17,7 +18,8 @@ instances:
       - service:postal
       - component:webui
 
-  - name: postal_health
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    name: postal_health
     url: http://localhost:5000/health
     method: GET
     timeout: 5

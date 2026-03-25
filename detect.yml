@@ -60,6 +60,27 @@
     mailcow_hostname: "{{ _mailcow_hostname_raw.stdout | trim | default('localhost') }}"
   when: has_mailcow | bool
 
+# -- Redis Password
+
+- name: Get Mailcow Redis password
+  shell: grep "^REDISPASS=" {{ mailcow_path }}/mailcow.conf | cut -d'=' -f2
+  register: _mailcow_redis_pass
+  changed_when: false
+  when: has_mailcow | bool
+
+- name: Get Mailcow Redis port
+  shell: grep "^REDIS_PORT=" {{ mailcow_path }}/mailcow.conf | cut -d'=' -f2 | cut -d':' -f2
+  register: _mailcow_redis_port
+  changed_when: false
+  when: has_mailcow | bool
+
+- name: Set Redis connection facts
+  set_fact:
+    redis_host: "127.0.0.1"
+    redis_port: "{{ _mailcow_redis_port.stdout | default('6379') }}"
+    redis_password: "{{ _mailcow_redis_pass.stdout | default('') }}"
+  when: has_mailcow | bool
+
 # ── Postfix detection (standalone only) ───────────────────────────────────────
 - name: Check Postfix binary
   command: which postfix

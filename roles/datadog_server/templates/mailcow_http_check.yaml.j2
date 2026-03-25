@@ -5,7 +5,8 @@
 init_config:
 
 instances:
-  - name: mailcow_webui
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    name: mailcow_webui
     url: https://{{ mailcow_hostname }}/
     method: GET
     timeout: 10
@@ -17,7 +18,8 @@ instances:
       - service:mailcow
       - component:webui
 
-  - name: mailcow_api
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    name: mailcow_api
     url: https://{{ mailcow_hostname }}/api/v1/get/status/containers
     method: GET
     timeout: 10
@@ -29,7 +31,8 @@ instances:
       - service:mailcow
       - component:api
 
-  - name: mailcow_sogo
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    name: mailcow_sogo
     url: https://{{ mailcow_hostname }}/SOGo/
     method: GET
     timeout: 10

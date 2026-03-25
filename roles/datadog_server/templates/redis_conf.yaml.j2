@@ -5,7 +5,8 @@
 init_config:
 
 instances:
-  - host: {{ redis_host }}
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    host: {{ redis_host }}
     port: {{ redis_port }}
 {% if redis_password | length > 0 %}
     password: {{ redis_password }}

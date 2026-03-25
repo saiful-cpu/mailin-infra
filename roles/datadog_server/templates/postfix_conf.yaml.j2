@@ -5,7 +5,8 @@
 init_config:
 
 instances:
-  - directory: {{ postfix_queue_dir }}
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    directory: {{ postfix_queue_dir }}
     queues:
       - active
       - deferred

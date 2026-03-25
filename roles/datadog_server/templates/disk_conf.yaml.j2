@@ -5,9 +5,10 @@
 init_config:
 
 instances:
-  - use_mount: false
+  - min_collection_interval: {{ dd_min_collection_interval }}
+    use_mount: false
     all_partitions: false
-    excluded_filesystems:
+    file_system_exclude:
 {% for fs in disk_excluded_filesystems %}
       - {{ fs }}
 {% endfor %}
