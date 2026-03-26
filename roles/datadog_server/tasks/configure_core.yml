@@ -10,25 +10,28 @@
     backup: yes
   notify: restart datadog-agent
 
-- name: Configure system-probe for NPM
-  blockinfile:
-    path: "{{ dd_conf_dir }}/system-probe.yaml"
-    create: yes
-    marker: "# {mark} ANSIBLE MANAGED - network_monitoring"
-    block: |
-      network_monitoring:
-        enabled: true
+# ── system-probe.yaml (fully managed — template owns the entire file) ─────────
+- name: Deploy system-probe.yaml
+  template:
+    src: system-probe.yaml.j2
+    dest: "{{ dd_conf_dir }}/system-probe.yaml"
+    owner: root
+    group: dd-agent
+    mode: '0640'
     backup: yes
   notify: restart datadog-agent-sysprobe
   when: dd_npm_enabled | bool
 
-- name: Disable NPM in system-probe.yaml
-  blockinfile:
-    path: "{{ dd_conf_dir }}/system-probe.yaml"
-    create: yes
-    marker: "# {mark} ANSIBLE MANAGED - network_monitoring"
-    state: absent
-    backup: yes
+- name: Clear system-probe.yaml when NPM disabled
+  copy:
+    content: |
+      ## system-probe.yaml
+      ## Managed by Ansible — do not edit manually
+    dest: "{{ dd_conf_dir }}/system-probe.yaml"
+    owner: root
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent-sysprobe
   when: not (dd_npm_enabled | bool)
 
 - name: Ensure system-probe service is started and enabled

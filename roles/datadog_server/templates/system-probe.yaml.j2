@@ -1,0 +1,8 @@
+## system-probe.yaml
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+{% if dd_npm_enabled | bool %}
+network_monitoring:
+  enabled: true
+{% endif %}

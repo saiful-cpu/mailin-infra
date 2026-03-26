@@ -12,16 +12,19 @@
   retries: 15
   delay: 2
   changed_when: false
+  check_mode: false
 
 - name: Check agent status
   command: datadog-agent status
   register: _dd_status
   changed_when: false
   failed_when: false
+  check_mode: false
 
 - name: Show agent status summary
   debug:
-    msg: "{{ _dd_status.stdout_lines[:25] }}"
+    msg: "{{ (_dd_status.stdout_lines | default([]))[:25] }}"
+  when: _dd_status.stdout_lines | default([]) | length > 0
 
 - name: Show enabled integrations
   debug:

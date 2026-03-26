@@ -30,9 +30,7 @@ logs_enabled: {{ dd_logs_enabled | bool | lower }}
 
 logs_config:
   auto_multi_line_detection: false
-{% if dd_logs_enabled | bool and has_docker | bool %}
-  container_collect_all: true
-{% endif %}
+  container_collect_all: {{ (dd_logs_enabled | bool and has_docker | bool) | lower }}
 
 # ── APM ───────────────────────────────────────────────────────────────────────
 apm_config:
@@ -42,3 +40,5 @@ apm_config:
 process_config:
   process_collection:
     enabled: {{ dd_process_enabled | bool | lower }}
+  container_collection:
+    enabled: true

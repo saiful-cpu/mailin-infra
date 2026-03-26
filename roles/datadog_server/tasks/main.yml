@@ -16,12 +16,21 @@
   import_tasks: install.yml
   tags: [install]
 
+- name: Reset config (wipe conf.d + core files before clean provision)
+  import_tasks: reset_config.yml
+  tags: [reset]
+
 - name: Backup existing datadog config
   import_tasks: backup_config.yml
   tags: [configure, backup]
+  when: "'reset' not in ansible_run_tags"
 
 - name: Configure core (APM / process / NPM / logs)
   import_tasks: configure_core.yml
+  tags: [configure, core]
+
+- name: Ensure built-in system checks are present
+  import_tasks: configure_system_checks.yml
   tags: [configure, core]
 
 - name: Configure Docker integration

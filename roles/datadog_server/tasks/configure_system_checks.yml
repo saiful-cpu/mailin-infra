@@ -1,0 +1,43 @@
+---
+# Ensure built-in system check default configs exist.
+# The Datadog agent package installs these, but they can be lost if conf.d
+# is wiped. The agent will not run these checks without the conf.d file.
+- name: Ensure built-in system check directories exist
+  file:
+    path: "{{ dd_confd_dir }}/{{ item }}.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+  loop:
+    - cpu
+    - memory
+    - load
+    - network
+    - io
+    - uptime
+    - file_handle
+    - ntp
+
+- name: Ensure built-in system check default configs exist
+  copy:
+    dest: "{{ dd_confd_dir }}/{{ item }}.d/conf.yaml.default"
+    content: |
+      init_config:
+
+      instances:
+        - {}
+    owner: dd-agent
+    group: dd-agent
+    mode: '0644'
+    force: false
+  loop:
+    - cpu
+    - memory
+    - load
+    - network
+    - io
+    - uptime
+    - file_handle
+    - ntp
+  notify: restart datadog-agent

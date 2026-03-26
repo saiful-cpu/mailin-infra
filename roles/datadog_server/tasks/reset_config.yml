@@ -1,0 +1,32 @@
+---
+# Wipes all conf.d contents and resets datadog.yaml + system-probe.yaml
+# so Ansible fully owns the config state after the next configure run.
+# Run with: --tags reset,configure
+#
+# This calls backup_config first — a timestamped tar.gz is saved to
+# /var/backups/datadog/ before anything is removed.
+
+- name: Backup config before reset
+  import_tasks: backup_config.yml
+
+- name: Stop datadog-agent before reset
+  service:
+    name: datadog-agent
+    state: stopped
+  failed_when: false
+
+- name: Remove user-managed yaml configs from conf.d (preserve .default files)
+  shell: |
+    find {{ dd_confd_dir }} -mindepth 2 -name "*.yaml" -not -name "*.default" -delete
+    find {{ dd_confd_dir }} -mindepth 1 -type d -empty -delete
+  changed_when: true
+
+- name: Remove datadog.yaml (will be redeployed by configure)
+  file:
+    path: "{{ dd_conf_dir }}/datadog.yaml"
+    state: absent
+
+- name: Remove system-probe.yaml (will be redeployed by configure)
+  file:
+    path: "{{ dd_conf_dir }}/system-probe.yaml"
+    state: absent
