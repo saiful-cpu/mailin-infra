@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: mailcow_recreate
+  author: mailin
+  description: Force recreate all mailcow Docker containers
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Debian
+      versions: [bullseye, bookworm]
+    - name: Ubuntu
+      versions: ["20.04", "22.04", "24.04"]
+dependencies: []

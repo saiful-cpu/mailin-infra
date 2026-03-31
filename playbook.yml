@@ -22,7 +22,7 @@
 #   validate    — start agent and verify
 
 - name: Install and configure Datadog agent on mail VMs
-  hosts: mail_servers, mailin_inbound, mailin_outbound
+  hosts: mail_servers, mailin_inbound, mailin_outbound, node_hi_10_0001_vms_in
   become: true
   gather_facts: true
 

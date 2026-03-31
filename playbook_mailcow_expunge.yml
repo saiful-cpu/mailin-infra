@@ -1,0 +1,19 @@
+---
+# Expunge messages older than 2 weeks from all dovecot mailboxes.
+# Runs one server at a time to avoid overwhelming the fleet.
+#
+# Usage:
+#   ansible-playbook playbook_mailcow_expunge.yml
+#
+# Limit to a specific host:
+#   ansible-playbook playbook_mailcow_expunge.yml -l inbound-694-01a
+
+- name: Expunge old mail from dovecot
+  hosts: mail_servers
+  become: true
+  gather_facts: false
+  serial: 1
+  max_fail_percentage: 100
+
+  roles:
+    - role: mailcow_expunge

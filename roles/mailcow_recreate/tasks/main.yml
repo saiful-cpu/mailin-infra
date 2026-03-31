@@ -1,0 +1,16 @@
+---
+- name: Check mailcow directory exists
+  stat:
+    path: /opt/mailcow-dockerized
+  register: mailcow_dir
+
+- name: Force recreate mailcow containers
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: /opt/mailcow-dockerized
+  when: mailcow_dir.stat.exists and mailcow_dir.stat.isdir
+  register: recreate_result
+  retries: 2
+  delay: 10
+  until: recreate_result.rc == 0
+  tags: [mailcow_recreate]

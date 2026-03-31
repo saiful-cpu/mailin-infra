@@ -1,0 +1,18 @@
+---
+# Force recreate all mailcow containers, one server at a time.
+#
+# Usage:
+#   ansible-playbook playbook_mailcow_recreate.yml
+#
+# Limit to a specific host:
+#   ansible-playbook playbook_mailcow_recreate.yml -l inbound-694-01a
+
+- name: Force recreate mailcow containers
+  hosts: mailin_inbound, mail_servers 
+  become: true
+  gather_facts: false
+  serial: 1
+  max_fail_percentage: 100
+
+  roles:
+    - role: mailcow_recreate

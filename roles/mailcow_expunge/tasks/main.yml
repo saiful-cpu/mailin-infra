@@ -1,0 +1,19 @@
+---
+- name: Check mailcow directory exists
+  stat:
+    path: /opt/mailcow-dockerized
+  register: mailcow_dir
+
+- name: Expunge messages older than 2 weeks from all mailboxes
+  command: /usr/bin/docker compose exec -T dovecot-mailcow doveadm expunge -A mailbox % before 2w
+  args:
+    chdir: /opt/mailcow-dockerized
+  when: mailcow_dir.stat.exists and mailcow_dir.stat.isdir
+  register: expunge_result
+  tags: [mailcow_expunge]
+
+- name: Show expunge output
+  debug:
+    var: expunge_result.stdout_lines
+  when: expunge_result is not skipped and expunge_result.stdout_lines | length > 0
+  tags: [mailcow_expunge]
