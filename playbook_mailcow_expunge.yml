@@ -9,10 +9,10 @@
 #   ansible-playbook playbook_mailcow_expunge.yml -l inbound-694-01a
 
 - name: Expunge old mail from dovecot
-  hosts: mail_servers
+  hosts: mailin_inbound
   become: true
   gather_facts: false
-  serial: 1
+  serial: 5
   max_fail_percentage: 100
 
   roles:
