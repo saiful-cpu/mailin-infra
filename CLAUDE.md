@@ -8,45 +8,55 @@ This is an Ansible repository that installs and configures the Datadog Agent (v7
 
 ## Running Playbooks
 
-All-hosts deployment (mail servers + Proxmox nodes + jumpserver):
+Use the wrapper scripts instead of calling `ansible-playbook` directly — they handle vault prompting, terminal colors, and timestamped logs automatically. See `docs/run_datadog.md` for full details.
+
+### Datadog agent (`run_datadog.sh`)
+
+Mail VMs (default):
 ```bash
-ansible-playbook site.yml --ask-vault-pass
+./run_datadog.sh
+./run_datadog.sh -l inbound-745-01a
+./run_datadog.sh -l mailin_inbound --tags configure
+./run_datadog.sh --check
 ```
 
-Mail servers only (`mail_servers` + `mailin_inbound` groups, also runs `disk_cleanup` role):
+All host types (mail + Proxmox + jumpserver):
 ```bash
-ansible-playbook playbook.yml --ask-vault-pass
+./run_datadog.sh --site
+./run_datadog.sh --site -l proxmox_nodes
 ```
 
-Limit to a single host or group:
+Force agent reinstall:
 ```bash
-ansible-playbook playbook.yml -l inbound-745-01a --ask-vault-pass
-ansible-playbook site.yml -l proxmox_nodes --ask-vault-pass
+./run_datadog.sh -e "dd_force_update=true" --tags install,configure
 ```
 
-Dry run:
+Wipe config and reprovision a host:
 ```bash
-ansible-playbook playbook.yml --ask-vault-pass --check
-```
-
-Force agent reinstall (also restores deleted `.default` check configs):
-```bash
-ansible-playbook playbook.yml --ask-vault-pass -e "dd_force_update=true" --tags install,configure
-```
-
-Wipe all stale config then cleanly reprovision a host (backup is taken automatically):
-```bash
-ansible-playbook playbook.yml -l <host> --ask-vault-pass --tags reset,configure
-```
-
-Run only specific phases via tags:
-```bash
-ansible-playbook playbook.yml --ask-vault-pass --tags configure
-ansible-playbook playbook.yml --ask-vault-pass --tags "configure,redis"
-ansible-playbook playbook.yml --ask-vault-pass --tags validate
+./run_datadog.sh -l <host> --tags reset,configure
 ```
 
 Available tags: `detect`, `install`, `backup`, `reset`, `configure`, `core`, `docker`, `mailcow`, `postal`, `postfix`, `redis`, `memcached`, `proxmox`, `process`, `disk`, `validate`, `cleanup`
+
+### Mailcow container recreate (`run_mailcow_recreate.sh`)
+
+Targets `mailin_inbound` and `mail_servers`. Runs `docker compose up -d --force-recreate` one host at a time. See `docs/mailcow_recreate.md`.
+
+```bash
+./run_mailcow_recreate.sh
+./run_mailcow_recreate.sh -l inbound-850-01r
+./run_mailcow_recreate.sh --limit @logs/retry/playbook_mailcow_recreate.retry
+```
+
+### Mailcow Dovecot expunge (`run_mailcow_expunge.sh`)
+
+Targets `mailin_inbound`. Expunges messages older than 2 weeks from all mailboxes. Runs 5 hosts at a time. See `docs/mailcow_expunge.md`.
+
+```bash
+./run_mailcow_expunge.sh
+./run_mailcow_expunge.sh -l inbound-694-01a
+./run_mailcow_expunge.sh --limit @logs/retry/playbook_mailcow_expunge.retry
+```
 
 ## Architecture
 
@@ -56,6 +66,8 @@ Available tags: `detect`, `install`, `backup`, `reset`, `configure`, `core`, `do
 - **`datadog_proxmox`** — older dedicated role for Proxmox nodes, used by `playbook_proxmox.yml`. Superseded by `datadog_server` in `site.yml`.
 - **`datadog_mail`** — older dedicated role for mail VMs. Superseded by `datadog_server`.
 - **`disk_cleanup`** — configures Docker log rotation, systemd journal limits, and a cron-based purge script. Applied alongside `datadog_server` in `playbook.yml`.
+- **`mailcow_recreate`** — force recreates all Mailcow Docker containers via `docker compose up -d --force-recreate`. Retries up to 2 times on transient Docker errors. Used by `playbook_mailcow_recreate.yml`. See `docs/mailcow_recreate.md`.
+- **`mailcow_expunge`** — expunges Dovecot messages older than 2 weeks from all mailboxes via `doveadm expunge -A mailbox % before 2w`. Used by `playbook_mailcow_expunge.yml`. See `docs/mailcow_expunge.md`.
 
 ### Detection Flow (`roles/datadog_server/tasks/detect.yml`)
 
@@ -126,6 +138,27 @@ Every host gets: `env`, `host`, `hostname`, `role` (mailserver/proxmox/generic),
 | `postfix.d` | `has_postfix` | standalone Postfix only (not shadowed by Mailcow/Postal) |
 | `proxmox.d` + `journald.d` | `has_proxmox` | Proxmox API check + journal log collection |
 | `mcache.d` | `has_memcached` | Memcached integration |
+
+### Wrapper Scripts and Logging
+
+All playbooks have a corresponding wrapper script (`run_datadog.sh`, `run_mailcow_recreate.sh`, `run_mailcow_expunge.sh`) that:
+- Forces terminal colors via `ANSIBLE_FORCE_COLOR=1`
+- Saves a timestamped log to `logs/` with ANSI codes stripped (e.g. `logs/playbook_mailcow_recreate-20260331-054501.log`)
+- Preserves the ansible-playbook exit code via `PIPESTATUS[0]`
+
+Retry files are saved to `logs/retry/` (enabled in `ansible.cfg`). To re-run only failed hosts:
+```bash
+./run_mailcow_recreate.sh --limit @logs/retry/playbook_mailcow_recreate.retry
+```
+
+The `logs/` directory is gitignored. The `docs/` directory contains role-specific documentation (`run_datadog.md`, `mailcow_recreate.md`, `mailcow_expunge.md`).
+
+### Mailcow Playbook Behaviour
+
+`playbook_mailcow_recreate.yml` and `playbook_mailcow_expunge.yml` both use:
+- `serial: 1` for recreate (one host at a time — container restart causes brief downtime)
+- `serial: 5` for expunge (5 hosts at a time — safe to parallelise)
+- `max_fail_percentage: 100` — a failed host does not stop the remaining fleet from being processed
 
 ### Check Mode (`--check`)
 

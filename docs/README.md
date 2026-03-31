@@ -41,11 +41,14 @@ ansible-vault edit host_vars/pve02/vault.yml
 ansible-vault encrypt vars/vault.yml vars/vault_proxmox.yml
 ansible-vault encrypt host_vars/pve01/vault.yml host_vars/pve02/vault.yml
 
-# 5. Run on all servers
-ansible-playbook site.yml --ask-vault-pass
+# 5. Run on all servers (mail VMs)
+./run_datadog.sh
 
-# 6. Limit to one host for testing
-ansible-playbook site.yml -l test-mailcow --ask-vault-pass
+# 6. Run on all server types (mail + Proxmox + jumpserver)
+./run_datadog.sh --site
+
+# 7. Limit to one host for testing
+./run_datadog.sh -l test-mailcow
 ```
 
 ## Inventory
@@ -160,9 +163,9 @@ roles/datadog_server/defaults/    ← role defaults
 | `dd_api_key` | **required** | Datadog API key |
 | `dd_site` | `datadoghq.com` | Datadog intake site |
 | `dd_env` | `prod` | Environment tag |
-| `dd_apm_enabled` | `true` | Enable APM tracing |
-| `dd_process_enabled` | `true` | Enable process monitoring |
-| `dd_npm_enabled` | `true` | Enable Network Performance Monitoring |
+| `dd_apm_enabled` | `false` | Enable APM tracing (disabled to reduce CPU usage) |
+| `dd_process_enabled` | `false` | Enable full process list collection (expensive; container-level collection stays enabled) |
+| `dd_npm_enabled` | `false` | Enable Network Performance Monitoring (disabled to reduce CPU usage) |
 | `dd_logs_enabled` | `true` | Enable log collection |
 | `dd_agent_min_version` | `7.76.3` | Minimum agent version — auto-upgrades if installed version is below this. Set `""` to disable |
 | `dd_force_update` | `false` | Force reinstall regardless of current version |
@@ -179,30 +182,35 @@ roles/datadog_server/defaults/    ← role defaults
 
 ## Playbook tags
 
+Use `run_datadog.sh` — vault prompting and logging are handled automatically.
+
 ```bash
 # Detection only — shows what was found, no changes made
-ansible-playbook site.yml --ask-vault-pass --tags detect
+./run_datadog.sh --tags detect
 
 # Install / upgrade agent only (auto-upgrades if below dd_agent_min_version)
-ansible-playbook site.yml --ask-vault-pass --tags install
+./run_datadog.sh --tags install
 
 # Pin a specific minimum version
-ansible-playbook site.yml --ask-vault-pass --tags install -e "dd_agent_min_version=7.76.3"
+./run_datadog.sh --tags install -e "dd_agent_min_version=7.76.3"
 
 # Force reinstall regardless of current version
-ansible-playbook site.yml --ask-vault-pass --tags install -e "dd_force_update=true"
+./run_datadog.sh --tags install -e "dd_force_update=true"
 
 # Re-deploy all integration configs
-ansible-playbook site.yml --ask-vault-pass --tags configure
+./run_datadog.sh --tags configure
 
 # Specific integration only
-ansible-playbook site.yml --ask-vault-pass --tags redis
-ansible-playbook site.yml --ask-vault-pass --tags proxmox
-ansible-playbook site.yml --ask-vault-pass --tags mailcow
-ansible-playbook site.yml --ask-vault-pass --tags postal
+./run_datadog.sh --tags redis
+./run_datadog.sh --tags proxmox
+./run_datadog.sh --tags mailcow
+./run_datadog.sh --tags postal
 
 # Restart agent and show status
-ansible-playbook site.yml --ask-vault-pass --tags validate
+./run_datadog.sh --tags validate
+
+# Wipe config and reprovision a host
+./run_datadog.sh -l <hostname> --tags reset,configure
 ```
 
 ## What each enabled feature adds to `datadog.yaml`
@@ -218,9 +226,14 @@ ansible-playbook site.yml --ask-vault-pass --tags validate
 
 ```
 ansible/datadog/
-├── site.yml                         ← main entry point (all server types)
-├── playbook.yml                     ← mail servers only (legacy)
+├── site.yml                         ← all host types (mail + Proxmox + jumpserver)
+├── playbook.yml                     ← mail VMs only (mail_servers + mailin_inbound)
 ├── playbook_proxmox.yml             ← Proxmox only (legacy)
+├── playbook_mailcow_recreate.yml    ← force recreate Mailcow containers
+├── playbook_mailcow_expunge.yml     ← expunge Dovecot mail older than 2 weeks
+├── run_datadog.sh                   ← wrapper for site.yml / playbook.yml
+├── run_mailcow_recreate.sh          ← wrapper for playbook_mailcow_recreate.yml
+├── run_mailcow_expunge.sh           ← wrapper for playbook_mailcow_expunge.yml
 ├── ansible.cfg
 ├── inventory/
 │   └── hosts.ini
@@ -234,8 +247,14 @@ ansible/datadog/
 │   └── pve02/
 │       ├── vars.yml
 │       └── vault.yml                ← vault_proxmox_api_token_secret (encrypted)
+├── logs/                            ← timestamped run logs (gitignored)
+│   └── retry/                       ← Ansible retry files for failed hosts
 ├── docs/
-│   └── README.md
+│   ├── README.md                    ← this file
+│   ├── run_datadog.md               ← run_datadog.sh usage and examples
+│   ├── mailcow_recreate.md          ← mailcow_recreate role docs
+│   ├── mailcow_expunge.md           ← mailcow_expunge role docs
+│   └── integration-configs/         ← example integration config references
 └── roles/
     ├── datadog_server/              ← unified role (use this)
     │   ├── defaults/main.yml
@@ -270,7 +289,10 @@ ansible/datadog/
     │       ├── postfix_tcp_check.yaml.j2
     │       ├── proxmox_conf.yaml.j2
     │       └── redis_conf.yaml.j2
+    ├── mailcow_recreate/            ← force recreate Mailcow containers
+    ├── mailcow_expunge/             ← expunge old Dovecot mail
     ├── datadog_mail/                ← mail-only role (legacy)
+    ├── disk_cleanup/                ← Docker log rotation + journal limits + purge cron
     └── datadog_proxmox/             ← Proxmox-only role (legacy)
 ```
 
