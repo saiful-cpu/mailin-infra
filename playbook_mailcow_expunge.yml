@@ -12,7 +12,7 @@
   hosts: mailin_inbound
   become: true
   gather_facts: false
-  serial: 5
+  serial: 4
   max_fail_percentage: 100
 
   roles:
