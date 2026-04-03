@@ -1,6 +1,6 @@
 ---
 # Minimum free disk percentage to maintain (default: 5%)
-disk_min_free_pct: 5
+disk_min_free_pct: 28
 
 # Docker log rotation limits
 docker_log_max_size: "50m"
