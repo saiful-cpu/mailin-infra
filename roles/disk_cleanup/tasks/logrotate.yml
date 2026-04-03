@@ -17,6 +17,14 @@
     mode: '0644'
   register: btmp_logrotate
 
+- name: Compress existing uncompressed rotated logs (syslog.1, kern.log.1, auth.log.1)
+  shell: |
+    for f in /var/log/syslog.1 /var/log/kern.log.1 /var/log/auth.log.1; do
+      [ -f "$f" ] && gzip -9 "$f" || true
+    done
+  changed_when: false
+  failed_when: false
+
 - name: Force-run rsyslog logrotate to compress existing bloat
   command: logrotate -f /etc/logrotate.d/rsyslog
   when: rsyslog_logrotate.changed
