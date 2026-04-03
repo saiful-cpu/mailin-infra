@@ -1,4 +1,9 @@
 ---
+- name: Check if daemon.json already exists
+  stat:
+    path: /etc/docker/daemon.json
+  register: _daemon_json_pre
+
 - name: Ensure /etc/docker directory exists
   file:
     path: /etc/docker
@@ -15,7 +20,7 @@
     group: root
     mode: '0644'
     backup: yes
-  notify: restart docker
+  register: _daemon_json
 
 - name: Truncate existing oversized container logs
   shell: |
@@ -23,3 +28,11 @@
       -exec truncate -s 0 {} \;
   changed_when: false
   failed_when: false
+
+- name: Restart Docker (new config — daemon.json did not exist before)
+  service:
+    name: docker
+    state: restarted
+  when:
+    - _daemon_json.changed
+    - not _daemon_json_pre.stat.exists or disk_cleanup_restart_docker | bool

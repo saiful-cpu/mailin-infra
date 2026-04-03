@@ -1,0 +1,30 @@
+---
+- name: Deploy rsyslog logrotate config (syslog, kern.log, auth.log, etc.)
+  template:
+    src: logrotate-rsyslog.j2
+    dest: /etc/logrotate.d/rsyslog
+    owner: root
+    group: root
+    mode: '0644'
+  register: rsyslog_logrotate
+
+- name: Deploy btmp logrotate config
+  template:
+    src: logrotate-btmp.j2
+    dest: /etc/logrotate.d/btmp
+    owner: root
+    group: root
+    mode: '0644'
+  register: btmp_logrotate
+
+- name: Force-run rsyslog logrotate to compress existing bloat
+  command: logrotate -f /etc/logrotate.d/rsyslog
+  when: rsyslog_logrotate.changed
+  failed_when: false
+  changed_when: false
+
+- name: Force-run btmp logrotate to compress existing bloat
+  command: logrotate -f /etc/logrotate.d/btmp
+  when: btmp_logrotate.changed
+  failed_when: false
+  changed_when: false

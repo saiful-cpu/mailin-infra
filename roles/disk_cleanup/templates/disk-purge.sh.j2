@@ -35,6 +35,11 @@ purge_journal() {
   journalctl --vacuum-size={{ journal_max_use }} 2>/dev/null || true
 }
 
+purge_syslog() {
+  log "Force-rotating syslog/kern.log via logrotate..."
+  logrotate -f /etc/logrotate.d/rsyslog 2>/dev/null || true
+}
+
 purge_docker_system() {
   log "Pruning unused Docker images, networks, build cache..."
   docker system prune -f --filter "until=168h" 2>/dev/null || true
@@ -56,6 +61,7 @@ if needs_cleanup "/"; then
   free=$(( 100 - used ))
   log "WARNING: / is ${used}% used (${free}% free < ${MIN_FREE_PCT}% threshold). Running cleanup..."
 
+  purge_syslog
   purge_docker_logs
   purge_journal
   purge_docker_system

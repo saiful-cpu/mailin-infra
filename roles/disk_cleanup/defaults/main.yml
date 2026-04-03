@@ -6,9 +6,23 @@ disk_min_free_pct: 5
 docker_log_max_size: "50m"
 docker_log_max_file: "3"
 
+# Force Docker restart even if daemon.json already existed before this run.
+# Normally auto-detected: Docker restarts only when daemon.json is newly created.
+# Set to true to force a restart after updating an existing daemon.json.
+disk_cleanup_restart_docker: false
+
 # systemd journal retention
 journal_max_use: "500M"
 journal_max_file_sec: "1month"
+
+# Logrotate: syslog, kern.log, auth.log (overrides Ubuntu default /etc/logrotate.d/rsyslog)
+# Rotates when file exceeds this size (regardless of weekly schedule)
+logrotate_syslog_max_size: "100M"
+# Number of rotated copies to keep (oldest is deleted)
+logrotate_syslog_rotate: 4
+
+# Logrotate: btmp (failed login records)
+logrotate_btmp_rotate: 1
 
 # Purge script location
 disk_purge_script: /usr/local/bin/disk-purge

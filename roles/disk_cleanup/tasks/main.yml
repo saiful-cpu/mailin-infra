@@ -7,6 +7,10 @@
   import_tasks: journal.yml
   tags: [disk_cleanup, journal]
 
+- name: Configure logrotate for syslog, kern.log, btmp
+  import_tasks: logrotate.yml
+  tags: [disk_cleanup, logrotate]
+
 - name: Deploy disk purge script and cron
   import_tasks: purge_script.yml
   tags: [disk_cleanup, purge]

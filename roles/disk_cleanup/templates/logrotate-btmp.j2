@@ -1,0 +1,9 @@
+# Managed by Ansible (role: disk_cleanup). Do not edit manually.
+/var/log/btmp {
+    missingok
+    monthly
+    create 0660 root utmp
+    rotate {{ logrotate_btmp_rotate }}
+    compress
+    delaycompress
+}

@@ -1,9 +1,4 @@
 ---
-- name: restart docker
-  service:
-    name: docker
-    state: restarted
-
 - name: reload journald
   service:
     name: systemd-journald
