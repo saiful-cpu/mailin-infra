@@ -112,7 +112,7 @@
   when: has_mailcow | bool
 
 - name: Get Mailcow Redis password
-  shell: grep "^REDISPASS=" {{ mailcow_path }}/mailcow.conf | cut -d'=' -f2
+  shell: grep "^REDISPASS=" {{ mailcow_path }}/mailcow.conf | cut -d'=' -f2-
   register: _mailcow_redis_pass
   changed_when: false
   when: has_mailcow | bool
