@@ -1,4 +1,0 @@
----
-# Encrypt with: ansible-vault encrypt host_vars/pve02/vault.yml
-# Edit with:    ansible-vault edit host_vars/pve02/vault.yml
-vault_proxmox_api_token_secret: "token-secret-for-pve02-here"

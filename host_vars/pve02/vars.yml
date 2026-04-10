@@ -1,6 +1,0 @@
----
-# proxmox_api_user:       the user part only, e.g. user@realm
-# proxmox_api_token_name: the token ID (without the user prefix)
-# full token_id rendered as: user@realm!tokenname
-proxmox_api_user: "mailininfra@pve"
-proxmox_api_token_name: "mailininfra"
