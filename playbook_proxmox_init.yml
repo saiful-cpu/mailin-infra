@@ -1,0 +1,127 @@
+---
+# One-time Proxmox API token provisioning for Datadog monitoring.
+#
+# For each proxmox_nodes host that does NOT yet have a
+# host_vars/<hostname>/vault.yml on the controller, this playbook:
+#   1. Creates the mailininfra@pve user (idempotent)
+#   2. Grants PVEAuditor role on /
+#   3. Removes any existing mailininfra token (secret is lost if vault.yml is
+#      missing, so we must recreate it)
+#   4. Creates a fresh API token and captures the secret
+#   5. Writes host_vars/<hostname>/vars.yml (plain)
+#   6. Writes and encrypts host_vars/<hostname>/vault.yml
+#
+# Run via: ./run_proxmox_init.sh [-l <host>]
+# Already-provisioned hosts (vault.yml exists) are skipped automatically.
+
+- name: Provision Datadog API token on Proxmox nodes
+  hosts: proxmox_nodes
+  gather_facts: false
+
+  vars:
+    pve_user: "mailininfra@pve"
+    pve_token_name: "mailininfra"
+    host_vars_dir: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}"
+
+  tasks:
+    - name: Check if vault.yml already exists on controller
+      stat:
+        path: "{{ host_vars_dir }}/vault.yml"
+      delegate_to: localhost
+      become: false
+      register: vault_file
+
+    - name: Skip host — already provisioned
+      meta: end_host
+      when: vault_file.stat.exists
+
+    - name: Gather minimal facts
+      setup:
+        gather_subset: [min]
+
+    # ── User ────────────────────────────────────────────────────────────────────
+
+    - name: Ensure {{ pve_user }} user exists
+      command: pveum user add {{ pve_user }} --comment "Datadog monitoring"
+      register: user_add
+      failed_when:
+        - user_add.rc != 0
+        - "'already exists' not in user_add.stderr"
+      changed_when: user_add.rc == 0
+
+    - name: Grant PVEAuditor role to {{ pve_user }} on /
+      command: pveum aclmod / --user {{ pve_user }} --role PVEAuditor
+      changed_when: true
+
+    # ── Token ───────────────────────────────────────────────────────────────────
+
+    - name: Check if token {{ pve_token_name }} already exists
+      command: pveum user token list {{ pve_user }} --output-format json
+      register: token_list
+      changed_when: false
+
+    - name: Remove stale token (vault.yml missing — secret is unrecoverable)
+      command: pveum user token remove {{ pve_user }} {{ pve_token_name }}
+      when: >
+        (token_list.stdout | from_json)
+        | selectattr('tokenid', 'equalto', pve_user + '!' + pve_token_name)
+        | list | length > 0
+      changed_when: true
+
+    - name: Create API token {{ pve_token_name }}
+      command: >
+        pveum user token add {{ pve_user }} {{ pve_token_name }}
+        --privsep 0
+        --output-format json
+      register: token_result
+      no_log: true
+
+    - name: Extract token secret
+      set_fact:
+        pve_token_secret: "{{ (token_result.stdout | from_json).value }}"
+      no_log: true
+
+    # ── Write host_vars on controller ───────────────────────────────────────────
+
+    - name: Ensure host_vars/{{ inventory_hostname }}/ directory exists
+      file:
+        path: "{{ host_vars_dir }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      become: false
+
+    - name: Write vars.yml
+      copy:
+        dest: "{{ host_vars_dir }}/vars.yml"
+        content: |
+          ---
+          proxmox_api_user: "{{ pve_user }}"
+          proxmox_api_token_name: "{{ pve_token_name }}"
+        mode: '0644'
+      delegate_to: localhost
+      become: false
+
+    - name: Write vault.yml (plaintext — will be encrypted next)
+      copy:
+        dest: "{{ host_vars_dir }}/vault.yml"
+        content: |
+          ---
+          vault_proxmox_api_token_secret: "{{ pve_token_secret }}"
+        mode: '0600'
+      delegate_to: localhost
+      become: false
+      no_log: true
+
+    - name: Encrypt vault.yml with ansible-vault
+      command: >
+        ansible-vault encrypt
+        --vault-password-file {{ vault_pass_file }}
+        {{ host_vars_dir }}/vault.yml
+      delegate_to: localhost
+      become: false
+      no_log: true
+
+    - name: Done
+      debug:
+        msg: "Provisioned {{ pve_user }}!{{ pve_token_name }} on {{ inventory_hostname }} — host_vars written and encrypted."
