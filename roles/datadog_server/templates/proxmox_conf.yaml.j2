@@ -6,17 +6,39 @@
 ## via the Proxmox REST API.
 
 init_config:
+  service: "proxmox"
 
 instances:
   - min_collection_interval: {{ dd_min_collection_interval }}
+    timeout: 15
     proxmox_server: "https://{{ proxmox_host }}:{{ proxmox_port }}/api2/json"
     headers:
       Authorization: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_name }}={{ proxmox_api_token_secret }}"
     tls_verify: {{ proxmox_ssl_verify | lower }}
     collect_guest_metrics: false
+    collect_tasks: true
+    collected_task_types:
+      - qmstart
+      - qmstop
+      - qmshutdown
+      - qmreboot
+      - qmmigrate
+      - qmclone
+      - qmcreate
+      - qmdestroy
+      - qmsnapshot
+      - vzstart
+      - vzstop
+      - vzshutdown
+      - vzmigrate
+      - vzcreate
+      - vzdestroy
+      - vzdump
+      - vzrestore
     tags:
       - env:{{ dd_env }}
       - role:{{ server_role }}
       - host:{{ ansible_facts['hostname'] }}
       - pve_node:{{ ansible_facts['hostname'] }}
+      - proxmox_node:{{ ansible_facts['hostname'] }}
       - pve_cluster:{{ pve_cluster }}

@@ -4,6 +4,8 @@
 
 logs:
   - type: journald
+    source: "proxmox"
+    service: "proxmox"
     container_mode: false
     include_units:
       - pvedaemon.service
