@@ -14,6 +14,7 @@ logs:
       - pve-cluster.service
       - pve-firewall.service
       - corosync.service
+      - datadog-agent.service
     tags:
       - env:{{ dd_env }}
       - role:{{ server_role }}

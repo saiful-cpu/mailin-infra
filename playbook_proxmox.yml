@@ -1,19 +1,13 @@
 ---
 # Datadog Agent — Proxmox VE Node Deployment
 #
+# Deprecated: use site.yml or run_datadog.sh --site instead.
+# This playbook now delegates to datadog_server (same role as site.yml).
+#
 # Usage:
-#   ansible-playbook -i inventory/hosts.ini playbook_proxmox.yml --ask-vault-pass
+#   ./run_datadog.sh --site -l proxmox_nodes
 #
-# Limit to one node:
-#   ansible-playbook -i inventory/hosts.ini playbook_proxmox.yml -l pve01 --ask-vault-pass
-#
-# Tags available:
-#   detect      — detect Proxmox environment only
-#   install     — install agent only
-#   configure   — apply all configs (core + proxmox integration)
-#   core        — datadog.yaml: APM, process, NPM, logs
-#   proxmox     — Proxmox API check + disk + journald log configs
-#   validate    — start agent and show status
+# Tags available: detect, install, configure, core, proxmox, disk, validate
 
 - name: Install and configure Datadog agent on Proxmox nodes
   hosts: proxmox_nodes
@@ -22,7 +16,6 @@
 
   vars_files:
     - vars/vault.yml          # vault_dd_api_key
-    - vars/vault_proxmox.yml  # vault_proxmox_api_user, vault_proxmox_api_token_*
 
   vars:
     dd_api_key: "{{ vault_dd_api_key }}"
@@ -30,4 +23,4 @@
     dd_env: "prod"
 
   roles:
-    - role: datadog_proxmox
+    - role: datadog_server
