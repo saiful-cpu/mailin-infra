@@ -13,7 +13,7 @@ instances:
     headers:
       Authorization: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_name }}={{ proxmox_api_token_secret }}"
     tls_verify: {{ proxmox_ssl_verify | lower }}
-    collect_guest_metrics: true
+    collect_guest_metrics: false
     tags:
       - env:{{ dd_env }}
       - role:{{ server_role }}
