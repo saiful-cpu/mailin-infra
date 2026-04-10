@@ -9,7 +9,8 @@
 #      missing, so we must recreate it)
 #   4. Creates a fresh API token and captures the secret
 #   5. Writes host_vars/<hostname>/vars.yml (plain)
-#   6. Writes and encrypts host_vars/<hostname>/vault.yml
+#   6. Writes host_vars/<hostname>/vault.yml (plaintext — encrypted by the
+#      wrapper script after the play completes)
 #
 # Run via: ./run_proxmox_init.sh [-l <host>]
 # Already-provisioned hosts (vault.yml exists) are skipped automatically.
@@ -55,18 +56,14 @@
 
     # ── Token ───────────────────────────────────────────────────────────────────
 
-    - name: Check if token {{ pve_token_name }} already exists
-      command: pveum user token list {{ pve_user }} --output-format json
-      register: token_list
-      changed_when: false
-
-    - name: Remove stale token (vault.yml missing — secret is unrecoverable)
+    - name: Remove existing token if present (secret is unrecoverable without vault.yml)
       command: pveum user token remove {{ pve_user }} {{ pve_token_name }}
-      when: >
-        (token_list.stdout | from_json)
-        | selectattr('tokenid', 'equalto', pve_user + '!' + pve_token_name)
-        | list | length > 0
-      changed_when: true
+      register: token_remove
+      failed_when:
+        - token_remove.rc != 0
+        - "'does not exist' not in (token_remove.stderr | lower)"
+        - "'no such' not in (token_remove.stderr | lower)"
+      changed_when: token_remove.rc == 0
 
     - name: Create API token {{ pve_token_name }}
       command: >
@@ -74,12 +71,11 @@
         --privsep 0
         --output-format json
       register: token_result
-      no_log: true
 
     - name: Extract token secret
       set_fact:
         pve_token_secret: "{{ (token_result.stdout | from_json).value }}"
-      no_log: true
+      no_log: true  # hides the secret value from logs
 
     # ── Write host_vars on controller ───────────────────────────────────────────
 
@@ -102,22 +98,13 @@
       delegate_to: localhost
       become: false
 
-    - name: Write vault.yml (plaintext — will be encrypted next)
+    - name: Write vault.yml (plaintext — wrapper encrypts it after play completes)
       copy:
         dest: "{{ host_vars_dir }}/vault.yml"
         content: |
           ---
           vault_proxmox_api_token_secret: "{{ pve_token_secret }}"
         mode: '0600'
-      delegate_to: localhost
-      become: false
-      no_log: true
-
-    - name: Encrypt vault.yml with ansible-vault
-      command: >
-        ansible-vault encrypt
-        --vault-password-file {{ vault_pass_file }}
-        {{ host_vars_dir }}/vault.yml
       delegate_to: localhost
       become: false
       no_log: true

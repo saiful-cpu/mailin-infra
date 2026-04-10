@@ -18,14 +18,13 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_DIR="${SCRIPT_DIR}/logs"
 
-# Capture vault password once — used by ansible-playbook AND the in-playbook
-# ansible-vault encrypt step.
+# Capture vault password once — ansible-vault requires a trailing newline.
 VAULT_PASS_FILE="$(mktemp)"
 trap 'rm -f "${VAULT_PASS_FILE}"' EXIT
 
 read -r -s -p "Vault password: " _vault_password
 echo
-printf '%s' "${_vault_password}" > "${VAULT_PASS_FILE}"
+printf '%s\n' "${_vault_password}" > "${VAULT_PASS_FILE}"
 unset _vault_password
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
@@ -37,7 +36,20 @@ echo ""
 
 ANSIBLE_FORCE_COLOR=1 ansible-playbook "${SCRIPT_DIR}/playbook_proxmox_init.yml" \
     --vault-password-file "${VAULT_PASS_FILE}" \
-    -e "vault_pass_file=${VAULT_PASS_FILE}" \
     "$@" 2>&1 | \
     tee >(sed 's/\x1b\[[0-9;]*[mK]//g' > "${LOG_FILE}")
-exit "${PIPESTATUS[0]}"
+PLAYBOOK_RC="${PIPESTATUS[0]}"
+
+# Encrypt any plaintext vault.yml files written by the playbook.
+# The playbook writes them unencrypted; we encrypt here so the same password
+# is reused without a second prompt.
+for vault_file in "${SCRIPT_DIR}"/host_vars/*/vault.yml; do
+    [[ -f "${vault_file}" ]] || continue
+    # Skip files already encrypted by a previous run
+    if ! head -1 "${vault_file}" 2>/dev/null | grep -q '^\$ANSIBLE_VAULT'; then
+        echo "Encrypting ${vault_file}..."
+        ansible-vault encrypt --vault-password-file "${VAULT_PASS_FILE}" "${vault_file}"
+    fi
+done
+
+exit "${PLAYBOOK_RC}"
