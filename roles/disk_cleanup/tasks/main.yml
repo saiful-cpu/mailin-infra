@@ -2,6 +2,7 @@
 - name: Configure Docker log rotation
   import_tasks: docker_logs.yml
   tags: [disk_cleanup, docker_logs]
+  when: has_docker | default(false) | bool
 
 - name: Configure systemd journal limits
   import_tasks: journal.yml

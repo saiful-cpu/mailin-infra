@@ -58,6 +58,7 @@
     dd_env: "prod"
   roles:
     - role: datadog_server
+    - role: disk_cleanup
 
 - name: Deploy Datadog agent on jumpserver
   hosts: jumpserver
