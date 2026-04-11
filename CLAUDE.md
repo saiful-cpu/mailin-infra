@@ -36,7 +36,7 @@ Wipe config and reprovision a host:
 ./run_datadog.sh -l <host> --tags reset,configure
 ```
 
-Available tags: `detect`, `install`, `backup`, `reset`, `configure`, `core`, `docker`, `mailcow`, `postal`, `postfix`, `redis`, `memcached`, `proxmox`, `process`, `disk`, `validate`, `cleanup`
+Available tags: `detect`, `install`, `backup`, `reset`, `configure`, `core`, `docker`, `mailcow`, `postal`, `postfix`, `redis`, `memcached`, `proxmox`, `process`, `disk`, `validate`, `cleanup`, `fail2ban`
 
 ### Mailcow container recreate (`run_mailcow_recreate.sh`)
 
@@ -64,7 +64,8 @@ Targets `mailin_inbound`. Expunges messages older than 2 weeks from all mailboxe
 
 - **`datadog_server`** — primary role used by `site.yml` for all host types. Runs detection, installs the agent, then conditionally applies integration configs based on detected services.
 - **`datadog_mail`** — older dedicated role for mail VMs. Superseded by `datadog_server`.
-- **`disk_cleanup`** — configures Docker log rotation, systemd journal limits, and a cron-based purge script. Applied alongside `datadog_server` in `playbook.yml`.
+- **`disk_cleanup`** — configures Docker log rotation, systemd journal limits, and a cron-based purge script. Docker log rotation task is guarded by `has_docker` — safe to run on non-Docker hosts (Proxmox). Applied in both `playbook.yml` (mail VMs) and `site.yml` (Proxmox nodes).
+- **`fail2ban`** — installs and configures fail2ban on Proxmox nodes with jails for SSH and Proxmox web UI (port 8006). Blocks after 3 failures within 10 minutes, bans for 1 hour. Whitelists the jumpserver IP. Filter reads from `pvedaemon.service` journal. Applied in `site.yml` for `proxmox_nodes`.
 - **`mailcow_recreate`** — force recreates all Mailcow Docker containers via `docker compose up -d --force-recreate`. Retries up to 2 times on transient Docker errors. Used by `playbook_mailcow_recreate.yml`. See `docs/mailcow_recreate.md`.
 - **`mailcow_expunge`** — expunges Dovecot messages older than 2 weeks from all mailboxes via `doveadm expunge -A mailbox % before 2w`. Used by `playbook_mailcow_expunge.yml`. See `docs/mailcow_expunge.md`.
 
@@ -117,6 +118,7 @@ The DD API key falls back to the `DD_API_KEY` environment variable if vault is u
 - `dd_process_enabled: false` — full process list collection disabled (expensive); container-level collection stays enabled via `container_collection.enabled: true`
 - `dd_logs_enabled: true`, `dd_log_level: warn`
 - `dd_min_collection_interval: 30` — all metric checks poll every 30s (default is 15s)
+- Proxmox nodes override defaults via `group_vars/proxmox_nodes/vars.yml`: `dd_process_enabled: true` (live process list for Processes page), `dd_npm_enabled: true` (network performance monitoring)
 
 ### Host Tags (set in `datadog.yaml` template)
 
@@ -133,10 +135,18 @@ Every host gets: `env`, `host`, `hostname`, `role` (mailserver/proxmox/generic),
 | `http_check.d/conf.yaml` | `has_mailcow` | HTTP endpoint checks for Mailcow |
 | `http_check.d/postal.yaml` | `has_postal` | HTTP endpoint checks for Postal |
 | `tcp_check.d/conf.yaml` | `has_mailcow` or `has_postal` or `has_postfix` | TCP port checks |
-| `process.d` | `has_mailcow` or `has_postal` | lightweight named-process checks (not full process list) |
+| `process.d` | `has_mailcow` or `has_postal` or `has_proxmox` | lightweight named-process checks (not full process list); Proxmox deploys pvedaemon/pveproxy/pvestatd/corosync monitors |
 | `postfix.d` | `has_postfix` | standalone Postfix only (not shadowed by Mailcow/Postal) |
 | `proxmox.d` + `journald.d` | `has_proxmox` | Proxmox API check + journal log collection |
 | `mcache.d` | `has_memcached` | Memcached integration |
+
+### Proxmox API Authentication
+
+The Datadog Proxmox check v2.4.0 does **not** use `token_id`/`token_secret` fields — they are silently ignored. Authentication is handled via Datadog's `auth_token` mechanism:
+
+- Token secret is stored in `/etc/datadog-agent/proxmox_api_token` (owned by `dd-agent`, mode 0640)
+- `proxmox_conf.yaml.j2` uses `auth_token.reader.type: file` + `auth_token.writer` to inject `Authorization: PVEAPIToken=...` header
+- Per-node token secrets are provisioned via `run_proxmox_init.sh` and stored encrypted in `host_vars/<hostname>/vault.yml`
 
 ### Wrapper Scripts and Logging
 
@@ -179,9 +189,12 @@ Host tags emitted by the agent (use these when scoping monitors):
 
 Use `mail_type:inbound` (not `type:inbound`) to scope monitors to inbound VMs.
 
+The `hostname:` config key is explicitly set in `datadog.yaml` to `{{ ansible_facts['hostname'] }}` (short hostname). Without this, agents auto-detect the FQDN which causes metric/tag mismatches with the Proxmox check's host entries.
+
 ### Known Limitations
 
 - `container.net.*` and `container.*.partial_stall` metrics require the system probe (NPM) to be running. These are not available with `dd_npm_enabled: false`.
 - The "Tokens are required to process patterns" log errors are a known agent issue with `container_collect_all` in this agent version — they are cosmetic and do not affect functionality.
 - NTP check will error on OVH inbound VMs because they use the AWS NTP endpoint `169.254.169.123` which is not reachable from OVH.
 - `regex_search(..., '\1')` returns `None` (not Undefined) when there is no match. Use `| default([], true)` (with the `true` boolean flag) before `| first` — plain `| default([])` does not replace `None`.
+- Datadog Proxmox check v2.4.0 does not support `token_id`/`token_secret` config fields — they are silently ignored. Use `auth_token` with a file reader instead (already configured in the template).

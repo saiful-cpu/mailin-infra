@@ -70,13 +70,24 @@ datadog-agent check proxmox --check-rate 2>&1 | grep -E "proxmox\.|Metric"
 
 ## Auth configuration note
 
-The Proxmox check uses the `headers` field for authentication — **not**
-`token_id`/`token_secret`. The correct format is:
+The Datadog Proxmox check v2.4.0 does **not** support `token_id`/`token_secret` fields — they are silently ignored by the check, resulting in unauthenticated requests and 401 errors.
+
+Authentication uses Datadog's `auth_token` mechanism instead:
 
 ```yaml
-headers:
-  Authorization: "PVEAPIToken=<user>@<realm>!<tokenid>=<secret>"
+auth_token:
+  reader:
+    type: file
+    path: /etc/datadog-agent/proxmox_api_token
+  writer:
+    type: header
+    name: Authorization
+    value: "PVEAPIToken=mailininfra@pve!mailininfra=<TOKEN>"
 ```
+
+The token secret file `/etc/datadog-agent/proxmox_api_token` is deployed by Ansible (owned by `dd-agent`, mode 0640). The `<TOKEN>` placeholder is replaced at runtime by fail2ban's file reader with the UUID from the file.
+
+Token provisioning is handled by `run_proxmox_init.sh` which creates the `mailininfra@pve` user, grants `PVEAuditor` role, generates an API token, and encrypts the secret into `host_vars/<hostname>/vault.yml`.
 
 ## Auto-collected checks (no conf.yaml needed)
 
@@ -86,7 +97,7 @@ headers:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `No ticket` 401 | Auth header missing/wrong format | Verify `headers.Authorization` in conf.yaml |
+| `No ticket` 401 | `token_id`/`token_secret` fields are silently ignored by check v2.4.0 | Use `auth_token` with file reader (see above) |
 | `no such user` 401 | User not created on this node | `pveum user add datadog@pve` |
 | `invalid token value` 401 | Wrong secret in conf | Regenerate token: `pveum user token remove datadog@pve datadog && pveum user token add ...` |
 | `NoneType.get` error | Token exists but missing PVEAuditor ACL | `pveum aclmod / --token 'datadog@pve!datadog' --role PVEAuditor` |
