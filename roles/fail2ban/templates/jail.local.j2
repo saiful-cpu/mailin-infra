@@ -1,0 +1,25 @@
+## jail.local — Managed by Ansible, do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+[DEFAULT]
+ignoreip = {{ fail2ban_whitelist_ips | join(' ') }}
+bantime  = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+backend  = systemd
+
+# ── SSH ───────────────────────────────────────────────────────────────────────
+[sshd]
+enabled  = true
+port     = ssh
+filter   = sshd
+backend  = systemd
+maxretry = {{ fail2ban_maxretry }}
+
+# ── Proxmox web UI (port 8006) ────────────────────────────────────────────────
+[proxmox]
+enabled  = true
+port     = 8006
+filter   = proxmox
+backend  = systemd
+maxretry = {{ fail2ban_maxretry }}

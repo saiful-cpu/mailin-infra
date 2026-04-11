@@ -1,0 +1,34 @@
+---
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+    update_cache: true
+  tags: [fail2ban]
+
+- name: Deploy Proxmox filter
+  copy:
+    src: proxmox.conf
+    dest: /etc/fail2ban/filter.d/proxmox.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart fail2ban
+  tags: [fail2ban]
+
+- name: Deploy jail.local
+  template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart fail2ban
+  tags: [fail2ban]
+
+- name: Enable and start fail2ban
+  service:
+    name: fail2ban
+    state: started
+    enabled: true
+  tags: [fail2ban]

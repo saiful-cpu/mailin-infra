@@ -44,6 +44,5 @@ instances:
     tags:
       - env:{{ dd_env }}
       - role:{{ server_role }}
-      - pve_node:{{ ansible_facts['hostname'] }}
       - proxmox_node:{{ ansible_facts['hostname'] }}
       - pve_cluster:{{ pve_cluster }}

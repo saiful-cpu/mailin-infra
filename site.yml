@@ -59,6 +59,7 @@
   roles:
     - role: datadog_server
     - role: disk_cleanup
+    - role: fail2ban
 
 - name: Deploy Datadog agent on jumpserver
   hosts: jumpserver
