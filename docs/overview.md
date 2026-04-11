@@ -59,10 +59,6 @@ Force recreates all Mailcow Docker containers (`docker compose up -d --force-rec
 
 Runs `doveadm expunge -A mailbox % before 2w` inside the dovecot container — removes messages older than 2 weeks. 4 hosts at a time.
 
-### `datadog_proxmox` + `datadog_mail` (Legacy)
-
-Older dedicated roles, now superseded by `datadog_server` in `site.yml`. Still used by `playbook_proxmox.yml`.
-
 ---
 
 ## Playbooks
@@ -71,7 +67,6 @@ Older dedicated roles, now superseded by `datadog_server` in `site.yml`. Still u
 |---|---|---|
 | `site.yml` | mail + proxmox + jumpserver | `datadog_server` |
 | `playbook.yml` | mail VMs | `datadog_server` + `disk_cleanup` |
-| `playbook_proxmox.yml` | proxmox_nodes | `datadog_proxmox` (legacy) |
 | `playbook_mailcow_recreate.yml` | mailin_inbound + mail_servers | `mailcow_recreate` |
 | `playbook_mailcow_expunge.yml` | mailin_inbound | `mailcow_expunge` |
 
@@ -87,7 +82,7 @@ Groups in `inventory/hosts.ini`:
 - `node_hi_10_0001_vms_in` — 22 VMs, `~/.ssh/mo.pem`
 - `infrastructure`, `utilities`, `warmup` — misc servers
 
-`host_vars/` — Per-node Proxmox API credentials (`vars.yml` + `vault.yml`) for 6 nodes.
+`host_vars/` — Per-node Proxmox API credentials (`vars.yml` + `vault.yml`) for all 10 Proxmox nodes. Provisioned via `run_proxmox_init.sh`.
 
 ---
 

@@ -162,6 +162,34 @@ ls -lht logs/site-*.log
 
 ---
 
+## Proxmox API Token Provisioning
+
+First-time setup for a new Proxmox node — creates the `mailininfra@pve` user, grants `PVEAuditor` role, generates an API token, and writes encrypted `host_vars/<hostname>/vault.yml`.
+
+```bash
+# Provision all new nodes (skips nodes that already have vault.yml)
+./run_proxmox_init.sh
+
+# Single node
+./run_proxmox_init.sh -l node-hi-60-0001
+```
+
+If a node's token secret is lost or stale (placeholder), delete its host_vars and re-provision:
+
+```bash
+ssh root@<node> "pveum user token remove mailininfra@pve mailininfra"
+rm host_vars/<node>/vault.yml host_vars/<node>/vars.yml
+./run_proxmox_init.sh -l <node>
+```
+
+After provisioning, deploy the Proxmox check config:
+
+```bash
+./run_datadog.sh --site -l proxmox_nodes --tags configure
+```
+
+---
+
 ## Troubleshooting
 
 ### Check agent status on a host

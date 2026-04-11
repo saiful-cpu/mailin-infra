@@ -63,7 +63,6 @@ Targets `mailin_inbound`. Expunges messages older than 2 weeks from all mailboxe
 ### Roles
 
 - **`datadog_server`** — primary role used by `site.yml` for all host types. Runs detection, installs the agent, then conditionally applies integration configs based on detected services.
-- **`datadog_proxmox`** — older dedicated role for Proxmox nodes, used by `playbook_proxmox.yml`. Superseded by `datadog_server` in `site.yml`.
 - **`datadog_mail`** — older dedicated role for mail VMs. Superseded by `datadog_server`.
 - **`disk_cleanup`** — configures Docker log rotation, systemd journal limits, and a cron-based purge script. Applied alongside `datadog_server` in `playbook.yml`.
 - **`mailcow_recreate`** — force recreates all Mailcow Docker containers via `docker compose up -d --force-recreate`. Retries up to 2 times on transient Docker errors. Used by `playbook_mailcow_recreate.yml`. See `docs/mailcow_recreate.md`.

@@ -15,7 +15,7 @@ instances:
     token_id: "{{ proxmox_api_user }}!{{ proxmox_api_token_name }}"
     token_secret: "{{ proxmox_api_token_secret }}"
     tls_verify: {{ proxmox_ssl_verify | lower }}
-    collect_guest_metrics: false
+    collect_guest_metrics: true
     collect_tasks: true
     collected_task_types:
       - qmstart
