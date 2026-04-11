@@ -7,6 +7,15 @@
     group: dd-agent
     mode: '0750'
 
+- name: Deploy Proxmox API token secret file
+  copy:
+    content: "{{ proxmox_api_token_secret }}"
+    dest: /etc/datadog-agent/proxmox_api_token
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent
+
 - name: Deploy Proxmox API check config
   template:
     src: proxmox_conf.yaml.j2

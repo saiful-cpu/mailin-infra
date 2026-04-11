@@ -12,9 +12,15 @@ instances:
   - min_collection_interval: {{ dd_min_collection_interval }}
     timeout: 15
     proxmox_server: "https://{{ proxmox_host }}:{{ proxmox_port }}/api2/json"
-    token_id: "{{ proxmox_api_user }}!{{ proxmox_api_token_name }}"
-    token_secret: "{{ proxmox_api_token_secret }}"
     tls_verify: {{ proxmox_ssl_verify | lower }}
+    auth_token:
+      reader:
+        type: file
+        path: /etc/datadog-agent/proxmox_api_token
+      writer:
+        type: header
+        name: Authorization
+        value: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_name }}=<TOKEN>"
     collect_guest_metrics: true
     collect_tasks: true
     collected_task_types:
