@@ -102,7 +102,7 @@
   file:
     path: "{{ dd_confd_dir }}/process.d"
     state: absent
-  when: not (has_mailcow | bool) and not (has_postal | bool)
+  when: not (has_mailcow | bool) and not (has_postal | bool) and not (has_proxmox | bool)
   notify: restart datadog-agent
   tags: [configure, cleanup]
 

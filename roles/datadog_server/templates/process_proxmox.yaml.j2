@@ -1,0 +1,26 @@
+## Process Monitoring — Proxmox VE Daemons
+## Managed by Ansible — do not edit manually
+## Generated: {{ ansible_facts['date_time'].iso8601 }}
+
+init_config:
+
+instances:
+  - name: pvedaemon
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - pvedaemon
+
+  - name: pveproxy
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - pveproxy
+
+  - name: pvestatd
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - pvestatd
+
+  - name: corosync
+    min_collection_interval: {{ dd_min_collection_interval }}
+    search_string:
+      - corosync

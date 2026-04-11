@@ -33,3 +33,21 @@
     mode: '0640'
   notify: restart datadog-agent
   when: dd_logs_enabled | bool
+
+# ── Process monitoring ────────────────────────────────────────────────────────
+- name: Create process.d conf directory
+  file:
+    path: "{{ dd_confd_dir }}/process.d"
+    state: directory
+    owner: dd-agent
+    group: dd-agent
+    mode: '0750'
+
+- name: Deploy Proxmox process check config
+  template:
+    src: process_proxmox.yaml.j2
+    dest: "{{ dd_confd_dir }}/process.d/proxmox.yaml"
+    owner: dd-agent
+    group: dd-agent
+    mode: '0640'
+  notify: restart datadog-agent
